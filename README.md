@@ -142,3 +142,58 @@ MIT License - Build mindful technology freely
 > *"Code with breath, build with intention, ship with mindfulness."*
 
 **Made with 🫁 for developers who care about well-being and ethical tech.**
+
+## 🌿 Guiding Principles
+
+Breath Master is intentionally subtle. It augments—not hijacks—your focus.
+
+1. Attention Respect – no flashing panels, no manipulative loops.
+2. Voluntary Depth – gamification is gentle decoration, never obligation.
+3. Body–Mind Balance – micro-regulation beats marathon sitting.
+4. Narrative as Soft Guidance – Eon speaks seldom; silence is acceptable.
+5. Local-First Privacy – nothing leaves your machine unless you export.
+6. Low Cognitive Load – status bar centric; minimal surfaces.
+7. No Shame, No FOMO – streaks encourage, never guilt.
+8. Sustainable Pace – encouragement frequency capped & user-tunable.
+9. Conservation Reciprocity – inspiration from forests → awareness of stewardship.
+10. Honest Monetization (future) – enterprise analytics only with explicit opt‑in.
+
+## 🌳 Conservation & Stewardship (Passive Awareness)
+
+If you feel gratitude, you may independently support conservation (links are passive; no in‑app solicitation):
+- Sequoia Parks Conservancy: https://sequoiaparksconservancy.org/support-a-program/
+- APAMI / Costa Rica Reforestation: https://giving.classy.org/campaign/644782/donate
+
+## 🗺️ Subtle Roadmap (Non-Pushy)
+
+- Daily Challenges (Eon’s whispers): DONE
+- Stretch Presets + Compact Mode: DONE
+- Gentle Reminder Cadence (idle only): EXPERIMENTAL
+- SVG Movement Icons (minimal set): CONSIDERING
+- Opt‑In Team Leaderboards (privacy-first): DESIGN PHASE
+- Enterprise Wellness Export Adapter: FUTURE
+- Pair / Group Ritual Windows: RESEARCH
+- Conservation Insight Badge (weekly consistency): MAYBE
+
+All future additions remain optional and off by default if they risk distraction.
+
+## 🧭 Philosophy Snapshot
+
+Not about “meditating more”. It’s about small breathable seams between cognitive shifts. Ignoring 90% of features is valid use.
+
+## ⚖️ Enterprise / Organizational Preview
+
+Potential direction (still conceptual): aggregated anonymous metrics (consistency bands, mindful minutes, challenge diversity) – no per-user surveillance dashboards. Paid adapter; core stays free.
+
+## 🔗 Link / Placeholder Audit
+
+Active external links intentionally documented (not surfaced automatically inside UI):
+- Sequoia Parks Conservancy (program support)
+- APAMI / Costa Rica (reforestation)
+
+Placeholders / future docs:
+- Enterprise integration guide (TBD)
+- Leaderboard privacy whitepaper (TBD)
+- SVG icon spec (TBD)
+
+---

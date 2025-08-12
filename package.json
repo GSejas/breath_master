@@ -162,6 +162,12 @@
           "enum": ["emoji", "none"],
           "default": "emoji",
           "description": "Icon style for stretch reminders (emoji or none). (Future: svg)."
+        },
+        "breathMaster.gentleReminder.cadence": {
+          "type": "string",
+          "enum": ["off", "low", "standard", "high"],
+          "default": "low",
+          "description": "Background encouragement frequency from Eon (off = none). Low: ~2/day, Standard: ~4/day, High: up to 6/day (only when idle & no session running)."
         }
       }
     },
@@ -242,10 +248,6 @@
       {
         "command": "breathMaster.completeChallenge",
         "title": "Breath Master: Complete Challenge"
-      },
-      {
-        "command": "breathMaster.openDonations",
-        "title": "Breath Master: Donate / Support"
       },
       {
         "command": "breathMaster.showLeaderboard",

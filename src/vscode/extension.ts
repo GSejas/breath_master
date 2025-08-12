@@ -447,28 +447,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const exportCommand = vscode.commands.registerCommand("breathMaster.exportData", exportData);
   const clearCommand = vscode.commands.registerCommand("breathMaster.clearData", clearData);
 
-  // Donation & leaderboard preview commands
-  const donationCommand = vscode.commands.registerCommand('breathMaster.openDonations', async () => {
-    const choice = await vscode.window.showInformationMessage(
-      'Support Sequoia & Costa Rica conservation (APAMI) or fuel development?',
-      '🌳 Donate to APAMI',
-      '🌲 Sequoia Conservation',
-      '☕ Buy Developer a Coffee',
-      'Cancel'
-    );
-    if (!choice || choice === 'Cancel') return;
-    const map: Record<string,string> = {
-      '🌳 Donate to APAMI': 'https://example.org/apami',
-      '🌲 Sequoia Conservation': 'https://example.org/sequoia-fund',
-      '☕ Buy Developer a Coffee': 'https://buymeacoffee.com/'
-    };
-    const url = map[choice];
-    if (url) {
-      vscode.env.openExternal(vscode.Uri.parse(url));
-      vscode.window.showInformationMessage('Opening external contribution page...');
-    }
-  });
-
+  // Leaderboard preview (placeholder)
   const leaderboardCommand = vscode.commands.registerCommand('breathMaster.showLeaderboard', async () => {
     vscode.window.showInformationMessage('🏆 Leaderboards planned: opt-in, privacy-first, company/team & global tiers. (Coming soon)');
   });
@@ -501,9 +480,8 @@ export function activate(context: vscode.ExtensionContext): void {
     changeGoalCommand,
     makePledgeCommand,
     cancelPledgeCommand,
-    quickSessionActionCommand,
-    donationCommand,
-    leaderboardCommand
+  quickSessionActionCommand,
+  leaderboardCommand
   );
 
   // Show tour if first time
@@ -513,6 +491,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Start the breathing animation
   startAnimation();
+
+  // Gentle reminder scheduling scaffold
+  scheduleGentleReminders();
 }
 
 function startAnimation(): void {
@@ -711,6 +692,30 @@ function restartAnimation(): void {
   
   stopAnimation();
   startAnimation();
+}
+
+// --- Gentle Reminders (Eon) -------------------------------------------------
+let gentleReminderTimer: NodeJS.Timeout | undefined;
+function scheduleGentleReminders() {
+  if (gentleReminderTimer) { clearInterval(gentleReminderTimer); gentleReminderTimer = undefined; }
+  const config = vscode.workspace.getConfiguration('breathMaster');
+  const cadence = config.get<string>('gentleReminder.cadence', 'low');
+  if (cadence === 'off') return;
+  // Map cadence to average interval minutes (randomized later)
+  const baseMinutes = cadence === 'low' ? 240 : cadence === 'standard' ? 180 : 120; // approx spacing
+  gentleReminderTimer = setInterval(() => {
+    const active = meditationTracker.getActiveSession();
+    if (active) return; // no reminders mid-session
+    const challenges = meditationTracker.getAvailableChallenges();
+    const level = meditationTracker.getCurrentLevel();
+    const pool: string[] = [];
+    if (challenges.length) pool.push(`A new challenge waits in stillness (${challenges.length}).`);
+    pool.push('Pause a breath, notice the subtle shift in shoulders.');
+    pool.push('Still code. Still mind. Let them meet.');
+    pool.push(`Level ${level.level} growth rings forming—consistency over intensity.`);
+    const msg = pool[Math.floor(Math.random() * pool.length)];
+    vscode.window.setStatusBarMessage(`🌳 ${msg}`, 6000);
+  }, baseMinutes * 60000 * (0.75 + Math.random()*0.5));
 }
 
 async function toggleBreathing(): Promise<void> {
