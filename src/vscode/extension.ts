@@ -7,6 +7,8 @@ import * as vscode from "vscode";
 import { BreatheEngine, Pattern } from "../engine/breathe-engine";
 import { MeditationTracker } from "../engine/gamification";
 import { OnboardingManager } from "../engine/onboarding";
+import { TutorialService } from "../engine/tutorial-service";
+import { JourneyCoverageTracker } from './journey-coverage';
 
 let engine: BreatheEngine;
 let statusBarItem: vscode.StatusBarItem;
@@ -16,6 +18,8 @@ let animationTimer: any | undefined;
 let lastPhase: string = "";
 let meditationTracker: MeditationTracker;
 let onboardingManager: OnboardingManager;
+let tutorialService: TutorialService;
+let journeyCoverage: JourneyCoverageTracker;
 // Track whether we've bound the new quick pledge command
 let quickPledgeRegistered = false;
 // Stretch preset scheduling
@@ -46,6 +50,17 @@ function parseStretchLabel(label: string): ParsedStretchStep {
   return { raw: label, action: rest, duration, quote, icon };
 }
 const STRETCH_PRESETS: StretchPreset[] = [
+  {
+    id: 'quick-test',
+    title: 'Quick Test (Demo)',
+    description: 'Fast demo for testing - 2 minutes total',
+    steps: [
+      { label: '🌳 Deep breath & shoulder roll (10s) - "Feel the flow begin"', afterMinutes: 0.2 }, // 12 seconds
+      { label: '🌳 Gentle neck stretch (15s) - "Release the tension"', afterMinutes: 0.5 }, // 30 seconds  
+      { label: '🌳 Quick wrist circles (10s) - "Hands ready for creation"', afterMinutes: 1 }, // 1 minute
+      { label: '🌳 Final centering breath (20s) - "Return to flow"', afterMinutes: 1.5 } // 1.5 minutes
+    ]
+  },
   {
     id: 'gentle-break',
     title: 'Gentle Break Flow',
@@ -115,6 +130,10 @@ export function activate(context: vscode.ExtensionContext): void {
   
   // Initialize onboarding manager
   onboardingManager = new OnboardingManager('breathMaster.onboarding', context.globalState);
+  
+  // Initialize tutorial service
+  tutorialService = new TutorialService(onboardingManager, context.extensionUri);
+  journeyCoverage = new JourneyCoverageTracker(context);
 
   // Create left-aligned status bar item
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
@@ -155,6 +174,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (started.started) {
       vscode.window.showInformationMessage(`🧘 Session started${chosen ? ' • Goal ' + chosen + 'm' : ''}`);
       updateGamificationDisplay();
+      try { journeyCoverage.record({ journeyId: 'quick-session-complete', step: 'startSession' }); } catch {}
     } else {
       vscode.window.showInformationMessage(`Cannot start session: ${started.reason}`);
     }
@@ -177,16 +197,38 @@ export function activate(context: vscode.ExtensionContext): void {
       const mins = Math.round(record.activeMs/60000*10)/10;
       const bonus = record.goalBonusXP ? ` • +${record.goalBonusXP} bonus XP` : '';
       const pledge = record.pledgeMultiplier && record.pledgeHonored ? ` • Pledge honored x${record.pledgeMultiplier}` : '';
-      vscode.window.showInformationMessage(`✅ Session ${mins}m${bonus}${pledge}`);
-      updateGamificationDisplay();
-      
-      // Check for challenge completion after session ends
-      const completed = meditationTracker.checkChallengeAutoCompletion();
-      completed.forEach(challenge => {
-        setTimeout(() => {
-          vscode.window.showInformationMessage(`🌳 ${challenge.completionMessage} (+${challenge.rewardXP} XP)`);
-        }, 1000);
+      // Show richer completion notification with follow-up options
+  const xpPart = record.finalXP ? ` • ${record.finalXP} XP` : '';
+      const pledgePart = pledge ? `\n${pledge.trim()}` : '';
+      const msg = `🌟 Meditation Complete: ${mins}m${bonus}${xpPart}${pledgePart}\n` +
+        `Rings deepen; clarity returns.`;
+      vscode.window.showInformationMessage(
+        msg,
+        'Start Another',
+        'Set Goal',
+        'View Challenges',
+        'Dismiss'
+      ).then(selection => {
+        if (selection === 'Start Another') {
+          vscode.commands.executeCommand('breathMaster.startSession');
+        } else if (selection === 'Set Goal') {
+          vscode.commands.executeCommand('breathMaster.changeGoal');
+        } else if (selection === 'View Challenges') {
+          vscode.commands.executeCommand('breathMaster.viewChallenges');
+        }
       });
+      updateGamificationDisplay();
+      try { journeyCoverage.record({ journeyId: 'quick-session-complete', step: 'endSession' }); } catch {}
+
+      // Surface any auto-completed challenges slightly after main toast
+      const completed = meditationTracker.checkChallengeAutoCompletion();
+      if (completed.length) {
+        completed.forEach((challenge, i) => {
+          setTimeout(() => {
+            vscode.window.showInformationMessage(`🌳 ${challenge.completionMessage} (+${challenge.rewardXP} XP)`);
+          }, 900 + i * 400);
+        });
+      }
     }
   });
   const changeGoalCommand = vscode.commands.registerCommand('breathMaster.changeGoal', async () => {
@@ -207,7 +249,8 @@ export function activate(context: vscode.ExtensionContext): void {
     const res = tracker.makePledge(pick.value, 1.15);
     if (res.ok) {
       vscode.window.showInformationMessage(`🎯 Pledge set: ${pick.value}m • +15% if goal fully met`);
-  updateGamificationDisplay();
+	updateGamificationDisplay();
+    try { journeyCoverage.record({ journeyId: 'pledge-honored', step: 'makePledge' }); } catch {}
     } else {
       vscode.window.showInformationMessage(`Cannot create pledge: ${res.reason}`);
     }
@@ -221,14 +264,18 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Stretch preset start
   const startStretchPreset = vscode.commands.registerCommand('breathMaster.startStretchPreset', async () => {
+    console.log('🧘 [DEBUG] startStretchPreset command triggered');
     if (activeStretchPreset) {
+      console.log('🧘 [DEBUG] Already active stretch preset, showing warning');
       vscode.window.showWarningMessage('A stretch preset is already active. Cancel it first.');
       return;
     }
+    console.log('🧘 [DEBUG] Showing QuickPick with', STRETCH_PRESETS.length, 'presets');
     const pick = await vscode.window.showQuickPick(
       STRETCH_PRESETS.map(p => ({ label: p.title, description: p.description, id: p.id })),
       { placeHolder: 'Select a stretch preset to schedule' }
     );
+    console.log('🧘 [DEBUG] User picked:', pick?.label || 'nothing');
     if (!pick) return;
     const preset = STRETCH_PRESETS.find(p => p.id === pick.id)!;
     const base = Date.now();
@@ -267,31 +314,63 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       return parts.join(' ').replace(/\s+/g, ' ');
     };
+    console.log('🧘 [DEBUG] Setting up timers for', preset.steps.length, 'steps');
+    
+    // Show first step immediately in status bar (not popup!)
+    if (preset.steps.length > 0) {
+      const firstStep = preset.steps[0];
+      const formattedFirstStep = formatStep(firstStep.label);
+      console.log('🧘 [DEBUG] Showing immediate first step in status bar:', formattedFirstStep);
+      // Don't show popup - the status bar will display the instruction persistently
+    }
+    
     preset.steps.forEach((step: StretchPresetStep, idx: number) => {
       const t = setTimeout(() => {
         // If cancelled before firing, abort
-        if (!activeStretchPreset || activeStretchPreset.preset.id !== preset.id) return;
-        vscode.window.showInformationMessage(`🧘 ${preset.title}: ${formatStep(step.label)}`);
+        if (!activeStretchPreset || activeStretchPreset.preset.id !== preset.id) {
+          console.log('🧘 [DEBUG] Timer fired but stretch preset was cancelled, aborting step', idx);
+          return;
+        }
+        const formattedStep = formatStep(step.label);
+        console.log('🧘 [DEBUG] Firing step', idx, ':', formattedStep);
+        vscode.window.showInformationMessage(`🧘 ${preset.title}: ${formattedStep}`);
         activeStretchPreset.completed = Math.max(activeStretchPreset.completed, idx + 1);
-        // If final step, mark completion & clear after a brief delay
+        // If final step, mark completion & show confirmation
         if (idx === preset.steps.length - 1) {
-          vscode.window.showInformationMessage(`✅ Stretch preset complete: ${preset.title}`);
-          const clearTimer = setTimeout(() => {
-            if (activeStretchPreset && activeStretchPreset.preset.id === preset.id) {
-              activeStretchPreset.timers.forEach(tt => clearTimeout(tt));
-              activeStretchPreset = null;
-              updateGamificationDisplay();
+          // Show completion notification with confirmation
+          vscode.window.showInformationMessage(
+            `🌟 Stretch Complete: ${preset.title}! You've completed all ${preset.steps.length} stretches. Well done!`,
+            'Acknowledge', 'Start Another Stretch'
+          ).then(selection => {
+            if (selection === 'Start Another Stretch') {
+              // Clear current stretch and let user pick a new one
+              if (activeStretchPreset) {
+                activeStretchPreset.timers.forEach(tt => clearTimeout(tt));
+                activeStretchPreset = null;
+                updateGamificationDisplay();
+              }
+              vscode.commands.executeCommand('breathMaster.startStretchPreset');
+            } else {
+              // Just acknowledge - keep completed state visible for a bit longer
+              setTimeout(() => {
+                if (activeStretchPreset && activeStretchPreset.preset.id === preset.id) {
+                  activeStretchPreset.timers.forEach(tt => clearTimeout(tt));
+                  activeStretchPreset = null;
+                  updateGamificationDisplay();
+                }
+              }, 3000);
             }
-          }, 2500); // allow user to still see tooltip progress momentarily
-          timers.push(clearTimer as unknown as NodeJS.Timeout);
+          });
         }
         updateGamificationDisplay();
       }, step.afterMinutes * 60000);
       timers.push(t);
     });
-    activeStretchPreset = { preset, startedAt: base, timers, completed: 0 };
+    activeStretchPreset = { preset, startedAt: base, timers, completed: 0 }; // Start at 0 since we're showing first step persistently in status bar
+    console.log('🧘 [DEBUG] Stretch preset activated:', preset.title, 'with', timers.length, 'timers');
   vscode.window.showInformationMessage(`🧘 Stretch preset started: ${preset.title} (Use: Command Palette → Breath Master: Cancel Stretch Preset)`);
   updateGamificationDisplay();
+  try { journeyCoverage.record({ journeyId: 'stretch-preset-complete', step: 'startStretchPreset' }); } catch {}
   });
 
   const cancelStretchPreset = vscode.commands.registerCommand('breathMaster.cancelStretchPreset', () => {
@@ -324,6 +403,7 @@ export function activate(context: vscode.ExtensionContext): void {
     
     if (pick) {
       vscode.window.showInformationMessage(`🌳 Eon whispers: "${pick.challenge.eonMessage}"`);
+      try { journeyCoverage.record({ journeyId: 'challenge-engagement', step: 'viewChallenges' }); } catch {}
     }
   });
 
@@ -350,6 +430,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (result.success && result.challenge) {
         vscode.window.showInformationMessage(`🌳 ${result.challenge.completionMessage} (+${result.xpAwarded} XP)`);
         updateGamificationDisplay();
+        try { journeyCoverage.record({ journeyId: 'challenge-engagement', step: 'completeChallenge' }); } catch {}
       }
     }
   });
@@ -401,6 +482,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const started = tracker.startSession(goalMinutes);
     if (started.started) {
       vscode.window.showInformationMessage(`🧘 Session started${pick.value !== -1 ? ' with pledge' : ''} • Goal ${goalMinutes}m`);
+      if (pick.value !== -1) { try { journeyCoverage.record({ journeyId: 'pledge-honored', step: 'startSession' }); } catch {} }
     } else {
       vscode.window.showWarningMessage(`Cannot start session: ${started.reason}`);
     }
@@ -475,6 +557,10 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
   const tourCommand = vscode.commands.registerCommand("breathMaster.showTour", showTour);
+  const cathedralTutorialCommand = vscode.commands.registerCommand("breathMaster.startCathedralTutorial", async () => {
+    // Force show tutorial even if already seen
+    await tutorialService.startTutorial();
+  });
   const exportCommand = vscode.commands.registerCommand("breathMaster.exportData", exportData);
   const clearCommand = vscode.commands.registerCommand("breathMaster.clearData", clearData);
 
@@ -501,6 +587,7 @@ export function activate(context: vscode.ExtensionContext): void {
     cycleCommand, 
     meditateCommand,
     tourCommand,
+    cathedralTutorialCommand,
     exportCommand,
     clearCommand,
     configListener,
@@ -513,6 +600,18 @@ export function activate(context: vscode.ExtensionContext): void {
     cancelPledgeCommand,
   quickSessionActionCommand,
   leaderboardCommand
+  , vscode.commands.registerCommand('breathMaster.showJourneyCoverage', () => {
+      try {
+        const summary = journeyCoverage.getCoverageSummary();
+        const lines = summary.map(s => `${s.percent}% ${s.title} (${s.covered.length}/${s.steps.length})`).join('\n');
+        vscode.window.showInformationMessage(`Journey Coverage:\n${lines}`, 'Export JSON', 'Dismiss').then(sel => {
+          if (sel === 'Export JSON') {
+            const json = journeyCoverage.exportJson();
+            vscode.workspace.openTextDocument({ content: json, language: 'json' }).then(doc => vscode.window.showTextDocument(doc));
+          }
+        });
+      } catch {}
+    })
   );
 
   // Show tour if first time
@@ -578,9 +677,76 @@ function startAnimation(): void {
       phaseIcon = "$(chevron-down)"; // Downward breath flow
     }
 
-    // Display phase with both size and direction icons
-    statusBarItem.text = `${sizeIcon}${phaseIcon} ${phase} ${remainingSeconds}s`;
-    statusBarItem.tooltip = `breathMaster (${engine.pattern}) - ${phase} ${remainingSeconds}s\n↑ Inhale | — Hold | ↓ Exhale`;
+    // Check if stretch preset is active and should take priority in display
+    if (activeStretchPreset) {
+      const elapsed = Date.now() - activeStretchPreset.startedAt;
+      const total = activeStretchPreset.preset.steps.length;
+      const completed = activeStretchPreset.completed;
+      
+      // Show current step instruction with cycling messages, but keep breathing orb
+      if (completed === 0) {
+        // Show first step with cycling motivational messages
+        const currentStep = activeStretchPreset.preset.steps[0];
+        const parsed = parseStretchLabel(currentStep.label);
+        
+        // Create 4 cycling messages for this stretch
+        const baseAction = parsed.action.split(' (')[0]; // Remove duration from action
+        const duration = parsed.duration || '30s';
+        const quote = parsed.quote || 'Breathe and stretch mindfully';
+        
+        const cyclingMessages = [
+          `${baseAction} (${duration})`, // Full instruction
+          `${quote}`, // Inspirational quote
+          `Progress: 0/${total} steps`, // Progress reminder  
+          `Keep breathing: ${phase}` // Breathing integration
+        ];
+        
+        // Cycle through messages every few seconds based on current time
+        const cycleIndex = Math.floor(Date.now() / 3000) % cyclingMessages.length;
+        const currentMessage = cyclingMessages[cycleIndex];
+        
+        statusBarItem.text = `${sizeIcon}${phaseIcon} ${currentMessage}`;
+        statusBarItem.tooltip = `Stretch: ${activeStretchPreset.preset.title}\nCurrent: ${baseAction}\nBreathing: ${engine.pattern} - ${phase} ${remainingSeconds}s\n\n"${quote}"`;
+      } else if (completed < total) {
+        const next = activeStretchPreset.preset.steps
+          .filter((s, idx) => idx >= completed && s.afterMinutes * 60000 > elapsed)
+          .sort((a,b) => a.afterMinutes - b.afterMinutes)[0];
+        
+        if (next) {
+          const minsLeft = Math.max(0, Math.ceil((next.afterMinutes*60000 - elapsed)/60000));
+          
+          // Cycling messages while waiting for next stretch
+          const waitingMessages = [
+            `${activeStretchPreset.preset.title} (${completed}/${total})`,
+            `Next stretch ~${minsLeft}m`,
+            `Keep breathing: ${phase}`,
+            `Stay mindful while coding`
+          ];
+          const cycleIndex = Math.floor(Date.now() / 4000) % waitingMessages.length;
+          
+          statusBarItem.text = `${sizeIcon}${phaseIcon} ${waitingMessages[cycleIndex]}`;
+          statusBarItem.tooltip = `Stretch: ${activeStretchPreset.preset.title}\nProgress: ${completed}/${total} steps\nNext: ~${minsLeft} minutes\n\nBreathing: ${engine.pattern} - ${phase} ${remainingSeconds}s`;
+        } else {
+          statusBarItem.text = `${sizeIcon}${phaseIcon} Final stretch imminent`;
+          statusBarItem.tooltip = `Stretch: ${activeStretchPreset.preset.title}\nProgress: ${completed}/${total} steps\nFinal step coming soon!\n\nBreathing: ${engine.pattern} - ${phase} ${remainingSeconds}s`;
+        }
+      } else {
+        const completedMessages = [
+          `${activeStretchPreset.preset.title} complete!`,
+          `All ${total} stretches done`,
+          `Keep breathing: ${phase}`, 
+          `Return to mindful coding`
+        ];
+        const cycleIndex = Math.floor(Date.now() / 3000) % completedMessages.length;
+        
+        statusBarItem.text = `${sizeIcon}${phaseIcon} ${completedMessages[cycleIndex]}`;
+        statusBarItem.tooltip = `Stretch: ${activeStretchPreset.preset.title}\nCompleted all ${total} steps!\n\nBreathing: ${engine.pattern} - ${phase} ${remainingSeconds}s`;
+      }
+    } else {
+      // Default breathing display when no stretch preset is active
+      statusBarItem.text = `${sizeIcon}${phaseIcon} ${phase} ${remainingSeconds}s`;
+      statusBarItem.tooltip = `breathMaster (${engine.pattern}) - ${phase} ${remainingSeconds}s\n↑ Inhale | — Hold | ↓ Exhale`;
+    }
     
     // Update right-side fun button with pattern name and breathing icon
     if (showBoth) {
@@ -816,22 +982,29 @@ async function toggleMeditation(): Promise<void> {
 }
 
 async function showTour(): Promise<void> {
-  // Simplified single-step, non-modal welcome to avoid notification fatigue
-  const picked = await vscode.window.showInformationMessage(
-    '🫁 Welcome to Breath Master — cultivate a calm, continuous flow while you code.',
-    'Enable Breath Master Mode', // enable gamification/tracking
-    'Skip'
-  );
+  // Enhanced tutorial experience - Cathedral of Code journey
+  try {
+    await tutorialService.startTutorial();
+  } catch (error) {
+    console.error('Tutorial failed to start:', error);
+    
+    // Fallback to simple welcome
+    const picked = await vscode.window.showInformationMessage(
+      '🫁 Welcome to Breath Master — cultivate a calm, continuous flow while you code.',
+      'Enable Breath Master Mode', // enable gamification/tracking
+      'Skip'
+    );
 
-  if (picked === 'Enable Breath Master Mode') {
-    const config = vscode.workspace.getConfiguration('breathMaster');
-    await config.update('enableGamification', true, vscode.ConfigurationTarget.Global);
-    onboardingManager.markTourCompleted(true);
-    vscode.window.showInformationMessage('🌟 Breath Master mode enabled. Track mindful progress anytime.');
-  } else {
-    // Mark seen so we do not re-prompt every startup
-    onboardingManager.markTourCompleted(false);
-    vscode.window.showInformationMessage('✨ You can enable Breath Master mode later from settings.');
+    if (picked === 'Enable Breath Master Mode') {
+      const config = vscode.workspace.getConfiguration('breathMaster');
+      await config.update('enableGamification', true, vscode.ConfigurationTarget.Global);
+      onboardingManager.markTourCompleted(true);
+      vscode.window.showInformationMessage('🌟 Breath Master mode enabled. Track mindful progress anytime.');
+    } else {
+      // Mark seen so we do not re-prompt every startup
+      onboardingManager.markTourCompleted(false);
+      vscode.window.showInformationMessage('✨ You can enable Breath Master mode later from settings.');
+    }
   }
 }
 

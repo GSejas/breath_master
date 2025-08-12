@@ -63,6 +63,18 @@ Challenges automatically complete when conditions are met:
 - Time-based: Verify meditation occurred in time window
 - Streaks: Monitor daily practice consistency
 
+```mermaid
+flowchart LR
+  L[Level / Stats] --> G[ensureDailyChallenges]
+  T[Time of Day Slots] --> G
+  G --> P{Slot Due?}
+  P -->|Yes| A[Activate Challenge]
+  P -->|No| W[Wait]
+  A --> U[User Acts]
+  U --> C[checkChallengeAutoCompletion]
+  C -->|Met| X[Award XP + Mark Complete]
+```
+
 ## User Experience
 
 ### Discovery

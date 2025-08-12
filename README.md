@@ -1,20 +1,24 @@
-# 🧘‍♀️ Breath Master - Mindful Coding with Ethical Gamification
+## �‍♀️ Breath Master - Mindful Coding with Ethical Gamification
+
+[![Documentation](https://img.shields.io/badge/docs-comprehensive-blue)](./docs/DOCUMENTATION-OVERVIEW.md)
+
+## 🎮 Mindful Coding Adventure🧘‍♀️ Breath Master - Mindful Coding with Ethical Gamification
 
 ## 🎮 Mindful Coding Adventure
 
 Transform your coding sessions into a mindful journey! Breath Master turns meditation into a fun, gamified experience while respecting your privacy and wellbeing. 
 
-![Breathing Animation](https://placeholder.com/breathing-guide.gif)
+![Breathing Animation](./resources/gif-animation-vscode-high.gif)
 
 **🏆 Challenge Yourself!** Track your progress, earn mindfulness achievements, and watch as you evolve from a Mindful Rookie to a Breath Master!
 
-![Level Progress](https://placeholder.com/level-progression.png)
+![Animation Modes](./resources/gif-animation-modes-high.gif)
 
 **🔥 Build Your Streak!** Stay consistent with your breathing practice and watch your daily streak grow - all while staying productive and centered during coding sessions.
 
 Remember: this is mindfulness with a playful twist - not a competitive race. Your wellbeing journey happens at your own pace, on your own terms.
 
-![Streaks Display](https://placeholder.com/streaks-display.gif)
+![Wide Animation Demo](./resources/gif-animation-modes-wide-high.gif)
 
 ## ✨ Features
 
@@ -51,6 +55,19 @@ Remember: this is mindfulness with a playful twist - not a competitive race. You
 4. **Optional Tour**: Run "Breath Master: Show Welcome Tour" from command palette
 5. **Optional Tracking**: Enable gamification in settings if desired
 
+Check out the [complete User Guide](./docs/USER-GUIDE.md) for detailed instructions and visualizations.
+
+### Status Bar Interface
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│  (Left) Breathing Indicator:  ●▲ Inhale 3s                                 │
+│                                                                            │
+│  (Right cluster)  🍃 Calm Coder • 🔥 5d • 06m • ▶ Goal 10m                  │
+│      Legend: Level • Streak • Today Time • Session State / Pledge          │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## ⚙️ Settings
 
 ```json
@@ -69,8 +86,21 @@ Remember: this is mindfulness with a playful twist - not a competitive race. You
 - `Breath Master: Cycle Pattern` - Try different breathing patterns
 - `Breath Master: Show Welcome Tour` - Replay the introduction
 - `Breath Master: Toggle Meditation Session` - Start/stop tracking
+- `Breath Master: Start Stretch Preset` - Begin a guided stretching routine
+- `Breath Master: Cancel Stretch Preset` - Stop the current stretch preset
 - `Breath Master: Export Your Data` - Save your progress
 - `Breath Master: Clear All Data` - Fresh start
+
+### Stretch Preset Flow
+
+```
+Start Preset ─┬─> Timer(5m) ─> Step 1 Notice
+              ├─> Timer(10m) ─> Step 2 Notice
+              ├─> Timer(15m) ─> Step 3 Notice
+              └─> Timer(20m) ─> Step 4 Notice
+
+Cancel Preset: clears all timers.
+```
 
 ## 🧘‍♂️ Breathing Patterns
 
@@ -82,6 +112,19 @@ Remember: this is mindfulness with a playful twist - not a competitive race. You
 | **Boxing** | 4-4-4-4 | Tactical breathing for concentration |
 | **Relaxing** | 4-7-8 | Deep relaxation technique |
 | **Custom** | Your choice | Create your perfect rhythm |
+
+## 🔄 Session Lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Running: startSession()
+  Running --> Paused: pauseSession()
+  Paused --> Running: resumeSession()
+  Running --> Finished: endSession()
+  Paused --> Finished: endSession()
+  Finished --> Idle
+```
 
 ## 🏆 Level System (Optional)
 
@@ -180,6 +223,8 @@ All future additions remain optional and off by default if they risk distraction
 ## 🧭 Philosophy Snapshot
 
 Not about “meditating more”. It’s about small breathable seams between cognitive shifts. Ignoring 90% of features is valid use.
+
+Read the narrative backdrop: [Origin Story – The Whispering Grove](./docs/design/narrative/ORIGIN-STORY.md)
 
 ## ⚖️ Enterprise / Organizational Preview
 

@@ -83,3 +83,20 @@ This release transforms BreatheGlow into **Breath Master**, introducing comprehe
 - Visual breathing cues with directional icons
 
 **Note**: Versions 0.0.1-0.0.3 were released under the "BreatheGlow" branding. Version 0.1.0 represents a complete rebranding and architectural enhancement to "Breath Master".
+
+## [0.2.2] - 2025-08-12
+
+### Added
+- Meditation session completion confirmation toast with follow-up actions (Start Another / Set Goal / View Challenges / Dismiss).
+- Stretch preset completion confirmation with acknowledge or start another flow; improved timed teardown of stretch state.
+
+### Changed
+- Unified post-session UX: richer messaging including XP, pledge honor, and goal bonus in a single actionable notification.
+- Staggered challenge completion toasts after session end to avoid notification pile-up.
+
+### Internal
+- Updated integration tests to new namespace (breathMaster.*) and relaxed config mutation assertions for VS Code test harness timing.
+- Minor refactor around endSession notification logic.
+
+### Notes
+This release focuses on closure & flow continuity—users now get an intentional completion moment without intrusive modals, preserving calm while offering next-step choices.

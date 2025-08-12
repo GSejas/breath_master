@@ -17,6 +17,18 @@ Shift intrinsic commitment into a gentle ritual, reinforcing autonomy and intent
 4. Completion: When goal reached → bonus applied; toast with reflective, non-judgmental copy.
 5. Early Stop: Toast: "Session ended early—still progress. Continue when ready." (no negative feedback).
 
+```
+Minimal Interface Flow
+User clicks gamification bar
+   ↓
+If session active -> Quick Controls (Pause / Resume / End / Pledge)
+Else -> Goal Select / Pledge Start
+   ↓
+Session Running -> cycles tracked -> XP + Challenges auto progress
+   ↓
+End Session -> XP calc (+pledge bonus if honored)
+```
+
 ## Data Model
 ```ts
 interface PledgeTemplate {

@@ -1,5 +1,26 @@
 # Eon the Sequoia: Meditation Guide & Wisdom Keeper
 
+```
+                        🌟
+                        ║
+                    ╔═══╩═══╗
+                  ╔═╩═══════╩═╗
+                ╔═╩═══════════╩═╗
+              ╔═╩═════════════════╩═╗
+            ╔═╩═══════════════════════╩═╗
+          ╔═╩═════════════════════════════╩═╗
+        ╔═╩═══════════════════════════════════╩═╗
+      ╔═╩═════════════════════════════════════════╩═╗
+      ║                 EON                         ║
+      ║              Ancient Wisdom                 ║
+      ║            1000+ Growth Rings               ║
+      ║         "Patience, young sapling..."        ║
+      ╚═══════════════════════════════════════════════╝
+                        ║ ║ ║
+                      🌿🌿🌿
+                      Root Network
+```
+
 ## Character Overview
 
 Eon is an ancient coast redwood (Sequoia sempervirens) who has stood sentinel in the digital realm for over a millennium. Neither male nor female, Eon transcends gender through the deep wisdom that comes from witnessing countless cycles of growth, seasons, and human generations. Their presence in Breath Master serves as a bridge between ancient contemplative traditions and modern mindfulness practice.
@@ -10,6 +31,22 @@ Eon is an ancient coast redwood (Sequoia sempervirens) who has stood sentinel in
 For over 1,000 years, Eon has observed the rise and fall of civilizations, the evolution of human consciousness, and the eternal dance between technology and nature. From their towering perspective, Eon has developed a unique understanding of how ancient wisdom principles apply to contemporary life.
 
 ### The Digital Grove
+
+```
+    Physical Realm          Digital Realm
+         🌳                      💻
+         ║                       ║
+    ╔════╩════╗             ╔════╩════╗
+    ║ Ancient ║    ∞───∞    ║  Code   ║
+    ║ Forest  ║    Portal   ║ Forest  ║
+    ║         ║             ║         ║
+    ║ 🌿 🌱 🌿 ║             ║ {} [] ; ║
+    ╚═════════╝             ╚═════════╝
+         ║                       ║
+    Breath rhythms          Bit rhythms
+    Natural cycles          CPU cycles
+```
+
 Eon exists in a sacred grove that exists simultaneously in physical and digital realms. This mystical space serves as a sanctuary where code and consciousness intersect, where the binary rhythms of technology harmonize with the natural rhythms of breath and life.
 
 ### The Teaching Philosophy
@@ -62,6 +99,7 @@ Eon's guidance is carefully crafted to:
 - Support practice without creating dependency
 - Encourage self-reliance while offering gentle guidance
 - Respect diverse spiritual backgrounds and beliefs
+- Promote healthy habit forming and stacking
 
 ## Cultural & Spiritual Context
 
@@ -87,6 +125,20 @@ Eon serves as a wisdom keeper who:
 - Maintains respect for both secular and spiritual approaches to mindfulness
 
 ## Narrative Arc in User Journey
+
+```
+    Novice (L1-3)        Developing (L4-6)      Advanced (L7-8)
+         🌱                     🌿                     🌳
+         │                      │                      │
+    "Young sapling..."     "Like my heartwood..."  "From my highest
+         │                      │                  branches..."
+    Basic encouragement    Deeper teachings       Wisdom integration
+         │                      │                      │
+    ┌────▼────┐           ┌─────▼─────┐          ┌─────▼─────┐
+    │ 2-min   │           │ Varied    │          │ Advanced  │
+    │ Sessions│           │ Challenges│          │ Practice  │
+    └─────────┘           └───────────┘          └───────────┘
+```
 
 ### Novice Practitioner (Levels 1-3)
 Eon offers basic encouragement and foundation-building guidance:

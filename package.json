@@ -2,7 +2,7 @@
   "name": "breath-master",
   "displayName": "Breath Master",
   "description": "Master your breathing and coding flow with gentle gamification and mindful tracking.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "publisher": "GSejas",
   "license": "MIT",
   "repository": {
@@ -34,6 +34,17 @@
   "main": "./dist/vscode/extension.js",
   "browser": "./dist/vscode/extension.js",
   "contributes": {
+    "colors": [
+      {
+        "id": "breathMaster.pledgeBackground",
+        "description": "Background color for active pledge status bar item",
+        "defaults": {
+          "dark": "#4a5c2a",
+          "light": "#e8f5e8",
+          "highContrast": "#4a5c2a"
+        }
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "Breath Master",
@@ -128,7 +139,7 @@
         "breathMaster.sessionGoal.showInStatus": {
           "type": "boolean",
           "default": true,
-            "description": "Show selected session time goal in the status bar when idle."
+          "description": "Show selected session time goal in the status bar when idle."
         },
         "breathMaster.sessionGoal.autoSuggest": {
           "type": "boolean",
@@ -144,11 +155,14 @@
           "type": "boolean",
           "default": true,
           "description": "Enable pledge (intentional commitment) feature for bonus XP (neutral if not completed)."
-        }
-        ,
+        },
         "breathMaster.stretch.compactMode": {
           "type": "string",
-          "enum": ["auto", "on", "off"],
+          "enum": [
+            "auto",
+            "on",
+            "off"
+          ],
           "default": "auto",
           "description": "Display stretch preset notifications in compact form (action + time only). auto: shorten longer entries; on: always compact; off: always full with quotes."
         },
@@ -159,13 +173,21 @@
         },
         "breathMaster.stretch.iconStyle": {
           "type": "string",
-          "enum": ["emoji", "none"],
+          "enum": [
+            "emoji",
+            "none"
+          ],
           "default": "emoji",
           "description": "Icon style for stretch reminders (emoji or none). (Future: svg)."
         },
         "breathMaster.gentleReminder.cadence": {
           "type": "string",
-          "enum": ["off", "low", "standard", "high"],
+          "enum": [
+            "off",
+            "low",
+            "standard",
+            "high"
+          ],
           "default": "low",
           "description": "Background encouragement frequency from Eon (off = none). Low: ~2/day, Standard: ~4/day, High: up to 6/day (only when idle & no session running)."
         }
@@ -187,6 +209,10 @@
       {
         "command": "breathMaster.showTour",
         "title": "Breath Master: Show Welcome Tour"
+      },
+      {
+        "command": "breathMaster.startCathedralTutorial",
+        "title": "Breath Master: Enter the Cathedral (Full Tutorial)"
       },
       {
         "command": "breathMaster.exportData",
@@ -227,8 +253,7 @@
       {
         "command": "breathMaster.quickSessionAction",
         "title": "Breath Master: Quick Session Action"
-      }
-      ,
+      },
       {
         "command": "breathMaster.quickPledge",
         "title": "Breath Master: Quick Pledge / Start"
@@ -262,6 +287,7 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:integration": "node ./dist/test/runTest.js",
+    "test:cov": "vitest run --coverage",
     "pretest": "npm run compile",
     "dev:install": "powershell -NoProfile -Command \"$ver = (Get-Content package.json | ConvertFrom-Json).version; npm run package; if ($LASTEXITCODE -eq 0) { code --install-extension ./breath-master-$ver.vsix }\"",
     "package": "npm run compile && npx @vscode/vsce package"
@@ -270,10 +296,11 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.2.1",
     "@types/vscode": "^1.102.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "@vscode/test-electron": "^2.5.2",
-  "glob": "^11.0.3",
-  "mocha": "^11.7.1",
-  "@vscode/vsce": "^3.6.0",
+    "@vscode/vsce": "^3.6.0",
+    "glob": "^11.0.3",
+    "mocha": "^11.7.1",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }

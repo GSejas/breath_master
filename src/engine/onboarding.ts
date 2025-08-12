@@ -10,6 +10,11 @@ export interface OnboardingState {
   lastEngagementMessage?: string;
   engagementCount: number;
   lastActiveDate: string;
+  tutorialProgress: {
+    currentStep: number;
+    completedSteps: string[];
+    startedAt?: string;
+  };
   userPreferences: {
     messageFrequency: 'off' | 'subtle' | 'moderate' | 'active';
     reminderStyle: 'gentle' | 'motivational' | 'data-driven';
@@ -134,6 +139,10 @@ export class OnboardingManager {
       if (stored) {
         return {
           ...stored,
+          tutorialProgress: stored.tutorialProgress || {
+            currentStep: 0,
+            completedSteps: []
+          },
           userPreferences: stored.userPreferences || {
             messageFrequency: 'subtle',
             reminderStyle: 'gentle'
@@ -149,6 +158,10 @@ export class OnboardingManager {
       gamificationOptIn: false,
       engagementCount: 0,
       lastActiveDate: new Date().toDateString(),
+      tutorialProgress: {
+        currentStep: 0,
+        completedSteps: []
+      },
       userPreferences: {
         messageFrequency: 'subtle',
         reminderStyle: 'gentle'
@@ -258,6 +271,10 @@ export class OnboardingManager {
       gamificationOptIn: false,
       engagementCount: 0,
       lastActiveDate: new Date().toDateString(),
+      tutorialProgress: {
+        currentStep: 0,
+        completedSteps: []
+      },
       userPreferences: {
         messageFrequency: 'subtle',
         reminderStyle: 'gentle'
@@ -270,38 +287,199 @@ export class OnboardingManager {
     return { ...this.state };
   }
 
-  // Tour content
-  getTourSteps(): Array<{ title: string; content: string; action?: string }> {
+  // Tutorial management
+  getTutorialProgress(): { currentStep: number; completedSteps: string[]; startedAt?: string } {
+    return { ...this.state.tutorialProgress };
+  }
+
+  startTutorial(): void {
+    this.state.tutorialProgress = {
+      currentStep: 0,
+      completedSteps: [],
+      startedAt: new Date().toISOString()
+    };
+    this.saveState();
+  }
+
+  advanceTutorialStep(stepId: string): boolean {
+    if (!this.state.tutorialProgress.completedSteps.includes(stepId)) {
+      this.state.tutorialProgress.completedSteps.push(stepId);
+    }
+    this.state.tutorialProgress.currentStep++;
+    this.saveState();
+    return true;
+  }
+
+  completeTutorial(gamificationChoice: boolean): void {
+    this.state.hasSeenTour = true;
+    this.state.tourCompletedAt = new Date().toISOString();
+    this.state.gamificationOptIn = gamificationChoice;
+    this.saveState();
+  }
+
+  // Game-style tutorial steps
+  getTutorialSteps(): Array<{ 
+    id: string; 
+    title: string; 
+    content: string; 
+    eonWisdom?: string;
+    action?: string;
+    type: 'welcome' | 'practice' | 'choice' | 'philosophy' | 'license' | 'ethics';
+    interactionRequired?: boolean;
+  }> {
     return [
       {
-        title: '🌟 Welcome to Breath Master',
-        content: 'Transform your coding experience with mindful breathing. This gentle tool helps you maintain focus and reduce stress while you work.',
-        action: 'Continue'
+        id: 'cathedral-entrance',
+        type: 'welcome',
+        title: '🏰 Enter the Cathedral of Code',
+        content: 'Welcome, traveler, to the ancient Cathedral where code meets consciousness. Here, in this sacred grove of digital wisdom, your journey begins...',
+        eonWisdom: 'I am Eon, the ancient Tree of a Thousand Seasons. I have watched countless developers find their rhythm between breath and code. Let me guide you through this mystical realm.',
+        action: 'Begin the Journey'
       },
       {
-        title: '👀 Breathing Indicator',
-        content: 'See the subtle breathing animation in your status bar? It guides your breath rhythm with visual cues that won\'t distract from your code.',
-        action: 'Show me'
+        id: 'game-rules',
+        type: 'practice', 
+        title: '📜 The Sacred Rules of Mindful Coding',
+        content: `
+        <div class="rules-scroll">
+          <h3>🎮 How to Play:</h3>
+          <ul>
+            <li><strong>🫁 Breath Bar:</strong> Follow the gentle pulse in your status bar</li>
+            <li><strong>🌊 Pattern Cycling:</strong> Right-click to change breathing rhythms</li>
+            <li><strong>🎯 FlowSeeds:</strong> Plant intention seeds for bonus XP</li>
+            <li><strong>🌱 Growth System:</strong> Level from Rookie to Master through practice</li>
+            <li><strong>🔥 Streaks:</strong> Daily consistency builds inner strength</li>
+          </ul>
+          <h3>📚 Sacred Terms:</h3>
+          <ul>
+            <li><strong>FlowSeeds:</strong> Your commitments that bloom into focused sessions</li>
+            <li><strong>Eon's Challenges:</strong> Daily quests from the ancient tree</li>
+            <li><strong>Cathedral Mode:</strong> Deep, uninterrupted coding meditation</li>
+          </ul>
+        </div>`,
+        eonWisdom: 'These are not mere features, young sapling. They are tools for cultivating awareness in the digital realm.',
+        action: 'I Understand the Ways',
+        interactionRequired: true
       },
       {
-        title: '🔄 Breathing Patterns',
-        content: 'Try different patterns: Chill for relaxation, Active for energy, Boxing for focus, or create your own custom pattern.',
-        action: 'Explore patterns'
+        id: 'breathing-practice',
+        type: 'practice',
+        title: '🌬️ First Breath - Feel the Ancient Rhythm',
+        content: 'Watch your status bar. See the gentle pulse? This is the heartbeat of mindful coding. Let your breath sync with this eternal rhythm that has guided contemplatives for millennia.',
+        eonWisdom: 'In my thousand seasons, I have learned: the breath is the bridge between mind and code, between intention and creation.',
+        action: 'Practice 3 Breaths',
+        interactionRequired: true
       },
       {
-        title: '🎮 Optional Gamification',
-        content: 'Want to track your mindful moments? Opt-in to gentle progress tracking. Your data stays completely private and local to your machine.',
-        action: 'Maybe later'
+        id: 'philosophy-chamber',
+        type: 'philosophy',
+        title: '🏛️ The Philosophy Chamber',
+        content: `
+        <div class="philosophy-chamber">
+          <h3>🌳 The Breath Master Philosophy</h3>
+          <p>We believe technology should serve human flourishing, not exploit it. Our design follows ancient wisdom:</p>
+          <div class="wisdom-pillars">
+            <div class="pillar">
+              <h4>🌱 Growth over Grinding</h4>
+              <p>Progress through patience, not pressure</p>
+            </div>
+            <div class="pillar">
+              <h4>🔐 Privacy as Sacred</h4>
+              <p>Your inner journey belongs only to you</p>
+            </div>
+            <div class="pillar">
+              <h4>⚖️ Balance over Burnout</h4>
+              <p>Sustainable practice, not sprint culture</p>
+            </div>
+          </div>
+          <a href="#" class="ethics-link" onclick="openEthicsDocument()">📖 Read Our Full Ethical Principles</a>
+        </div>`,
+        eonWisdom: 'These principles are not rules imposed from above, but truths discovered through seasons of growth.',
+        action: 'I Embrace This Path'
       },
       {
-        title: '🔐 Your Privacy',
-        content: 'Your breathing data never leaves your computer. You have full control: export, clear, or keep it private. No accounts, no tracking, no ads.',
-        action: 'I understand'
+        id: 'license-scroll',
+        type: 'license',
+        title: '📜 The License of Freedom',
+        content: `
+        <div class="license-scroll">
+          <h3>🕊️ MIT License - Your Code, Your Freedom</h3>
+          <p>Breath Master is released under the MIT License, ensuring your freedom to:</p>
+          <ul>
+            <li>✅ Use this tool for any purpose, commercial or personal</li>
+            <li>✅ Modify and adapt to your needs</li>
+            <li>✅ Distribute and share with your team</li>
+            <li>✅ Study the source code and learn from it</li>
+          </ul>
+          <div class="license-box">
+            <p><strong>Copyright (c) 2024 Breath Master Contributors</strong></p>
+            <p class="license-text">Permission is hereby granted, free of charge, to any person obtaining a copy of this software... to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software.</p>
+          </div>
+          <p class="freedom-note">🌟 True wisdom is meant to be shared freely, like the wind through leaves.</p>
+        </div>`,
+        eonWisdom: 'Knowledge, like sunlight, should nourish all who seek it. This license ensures the wisdom flows freely.',
+        action: 'Honor the Freedom'
       },
       {
-        title: '🧘‍♀️ Start Breathing',
-        content: 'Ready to begin? Just breathe along with the gentle animation. Click the status bar to toggle, right-click to cycle patterns.',
-        action: 'Let\'s breathe'
+        id: 'growth-chamber',
+        type: 'choice',
+        title: '🌟 The Growth Chamber - Choose Your Path',
+        content: `
+        <div class="growth-chamber">
+          <h3>🎮 Enable Your Journey Tracking?</h3>
+          <p>Like tree rings that mark seasons of growth, you can track your mindful coding journey:</p>
+          
+          <div class="choice-paths">
+            <div class="path path-tracked">
+              <h4>🌳 The Tracked Path</h4>
+              <ul>
+                <li>Level progression (Rookie → Master)</li>
+                <li>Daily streak celebrations</li>
+                <li>FlowSeed goal system</li>
+                <li>Eon's daily challenges</li>
+              </ul>
+              <p class="privacy-note">🔐 All data stays on your machine</p>
+            </div>
+            
+            <div class="path path-simple">
+              <h4>🍃 The Simple Path</h4>
+              <ul>
+                <li>Pure breathing guidance</li>
+                <li>Pattern cycling</li>
+                <li>No progress tracking</li>
+                <li>Minimal interface</li>
+              </ul>
+              <p class="simplicity-note">✨ Sometimes less is more</p>
+            </div>
+          </div>
+        </div>`,
+        eonWisdom: 'Both paths lead to the same destination: awareness. Choose what serves your growth.',
+        action: 'Make Your Choice'
+      },
+      {
+        id: 'cathedral-blessing',
+        type: 'welcome',
+        title: '✨ The Cathedral\'s Blessing',
+        content: `
+        <div class="blessing-chamber">
+          <h3>🏰 Your Journey Begins</h3>
+          <p>You have entered the sacred space where breath meets code. The Cathedral recognizes you as a seeker of mindful development.</p>
+          
+          <div class="blessing-content">
+            <h4>🎮 Your Breath Master Interface:</h4>
+            <ul>
+              <li><strong>Status Bar:</strong> Your breathing companion</li>
+              <li><strong>Right-click:</strong> Cycle through sacred patterns</li>
+              <li><strong>Commands:</strong> Access deeper features via Command Palette</li>
+            </ul>
+          </div>
+          
+          <div class="final-wisdom">
+            <p class="eon-final">"Remember, young developer: this tool amplifies your natural mindfulness. Use what serves you, release what doesn't. The Cathedral will always be here, a quiet presence in your digital journey."</p>
+            <p class="signature">— Eon, Tree of a Thousand Seasons 🌳</p>
+          </div>
+        </div>`,
+        action: 'Begin Coding Mindfully'
       }
     ];
   }

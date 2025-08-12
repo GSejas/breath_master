@@ -31,6 +31,18 @@ The Breath Master gamification layer is intentionally calm, opt-in, and ethicall
 3. If enabled: XP + streak + session timer appear.
 4. Pledges and advanced goals only shown after Level ≥ 3.
 
+```mermaid
+flowchart LR
+  L[Level / Stats] --> G[ensureDailyChallenges]
+  T[Time of Day Slots] --> G
+  G --> P{Slot Due?}
+  P -->|Yes| A[Activate Challenge]
+  P -->|No| W[Wait]
+  A --> U[User Acts]
+  U --> C[checkChallengeAutoCompletion]
+  C -->|Met| X[Award XP + Mark Complete]
+```
+
 ## Non-Dark Pattern Guardrails
 - No variable ratio reward schedules.
 - No urgency countdowns.
