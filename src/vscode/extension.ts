@@ -99,7 +99,8 @@ const STRETCH_PRESETS: StretchPreset[] = [
   }
 ];
 
-let activeStretchPreset: { preset: StretchPreset; startedAt: number; timers: NodeJS.Timeout[] } | null = null;
+// Active stretch preset state now tracks completed steps
+let activeStretchPreset: { preset: StretchPreset; startedAt: number; timers: NodeJS.Timeout[]; completed: number } | null = null;
 
 export function activate(context: vscode.ExtensionContext): void {
   // Initialize breathing engine with current pattern
@@ -266,21 +267,39 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       return parts.join(' ').replace(/\s+/g, ' ');
     };
-    preset.steps.forEach((step: StretchPresetStep) => {
+    preset.steps.forEach((step: StretchPresetStep, idx: number) => {
       const t = setTimeout(() => {
+        // If cancelled before firing, abort
+        if (!activeStretchPreset || activeStretchPreset.preset.id !== preset.id) return;
         vscode.window.showInformationMessage(`🧘 ${preset.title}: ${formatStep(step.label)}`);
+        activeStretchPreset.completed = Math.max(activeStretchPreset.completed, idx + 1);
+        // If final step, mark completion & clear after a brief delay
+        if (idx === preset.steps.length - 1) {
+          vscode.window.showInformationMessage(`✅ Stretch preset complete: ${preset.title}`);
+          const clearTimer = setTimeout(() => {
+            if (activeStretchPreset && activeStretchPreset.preset.id === preset.id) {
+              activeStretchPreset.timers.forEach(tt => clearTimeout(tt));
+              activeStretchPreset = null;
+              updateGamificationDisplay();
+            }
+          }, 2500); // allow user to still see tooltip progress momentarily
+          timers.push(clearTimer as unknown as NodeJS.Timeout);
+        }
+        updateGamificationDisplay();
       }, step.afterMinutes * 60000);
       timers.push(t);
     });
-    activeStretchPreset = { preset, startedAt: base, timers };
-    vscode.window.showInformationMessage(`🧘 Stretch preset started: ${preset.title}`);
+    activeStretchPreset = { preset, startedAt: base, timers, completed: 0 };
+  vscode.window.showInformationMessage(`🧘 Stretch preset started: ${preset.title} (Use: Command Palette → Breath Master: Cancel Stretch Preset)`);
+  updateGamificationDisplay();
   });
 
   const cancelStretchPreset = vscode.commands.registerCommand('breathMaster.cancelStretchPreset', () => {
     if (!activeStretchPreset) { vscode.window.showInformationMessage('No active stretch preset.'); return; }
-    activeStretchPreset.timers.forEach(t => clearTimeout(t));
+  activeStretchPreset.timers.forEach(t => clearTimeout(t));
     vscode.window.showInformationMessage(`Stretch preset cancelled: ${activeStretchPreset.preset.title}`);
     activeStretchPreset = null;
+  updateGamificationDisplay();
   });
 
   // Challenge commands
@@ -346,6 +365,7 @@ export function activate(context: vscode.ExtensionContext): void {
       items.push({ label: '⏹ End', action: 'end' });
       items.push({ label: '🎯 New / Replace Pledge', action: 'pledge' });
       if (tracker.getActivePledge()) items.push({ label: '🗑 Cancel Pledge', action: 'cancel' });
+    if (activeStretchPreset) items.push({ label: '🧘 Cancel Stretch Preset', action: 'cancel-stretch' });
       const pick = await vscode.window.showQuickPick(items, { placeHolder: 'Session controls' });
       if (!pick) return;
       switch (pick.action) {
@@ -354,6 +374,7 @@ export function activate(context: vscode.ExtensionContext): void {
   case 'end': vscode.commands.executeCommand('breathMaster.endSession'); updateGamificationDisplay(); break;
   case 'pledge': vscode.commands.executeCommand('breathMaster.makePledge'); updateGamificationDisplay(); break;
   case 'cancel': vscode.commands.executeCommand('breathMaster.cancelPledge'); updateGamificationDisplay(); break;
+  case 'cancel-stretch': vscode.commands.executeCommand('breathMaster.cancelStretchPreset'); break;
       }
       return;
     }
@@ -365,6 +386,16 @@ export function activate(context: vscode.ExtensionContext): void {
     if (pick.value !== -1) {
       const res = tracker.makePledge(pick.value, 1.15);
       if (!res.ok) vscode.window.showWarningMessage(`Pledge failed: ${res.reason}`);
+    }
+    // Allow quick cancel stretch if user wants before starting
+    if (activeStretchPreset) {
+      const addCancel = await vscode.window.showQuickPick([
+        { label: 'Proceed (keep stretch preset)', action: 'go' },
+        { label: 'Cancel active stretch preset first', action: 'cancel-stretch' }
+      ], { placeHolder: 'Stretch preset active – choose before starting session' });
+      if (addCancel && addCancel.action === 'cancel-stretch') {
+        vscode.commands.executeCommand('breathMaster.cancelStretchPreset');
+      }
     }
     const goalMinutes = pick.value === -1 ? goals.defaultMinutes : pick.value;
     const started = tracker.startSession(goalMinutes);
@@ -648,6 +679,24 @@ function updateGamificationDisplay(): void {
     md.appendMarkdown(`🌳 **${availableChallenges.length}** challenge${availableChallenges.length > 1 ? 's' : ''} from Eon  \n`);
   } else if (completedCount > 0) {
     md.appendMarkdown(`🌳 ${completedCount}/${totalChallenges.length} challenges completed today  \n`);
+  }
+  // Stretch preset status
+  if (activeStretchPreset) {
+    const elapsed = Date.now() - activeStretchPreset.startedAt;
+    const total = activeStretchPreset.preset.steps.length;
+    const completed = activeStretchPreset.completed;
+    const next = activeStretchPreset.preset.steps
+      .filter((s, idx) => idx >= completed && s.afterMinutes * 60000 > elapsed)
+      .sort((a,b) => a.afterMinutes - b.afterMinutes)[0];
+    if (next) {
+      const minsLeft = Math.max(0, Math.ceil((next.afterMinutes*60000 - elapsed)/60000));
+      md.appendMarkdown(`🧘 Stretch: **${activeStretchPreset.preset.title}** (${completed}/${total}, next ~${minsLeft}m)  \n`);
+    } else if (completed < total) {
+      md.appendMarkdown(`🧘 Stretch: **${activeStretchPreset.preset.title}** (${completed}/${total}, final step imminent)  \n`);
+    } else {
+      md.appendMarkdown(`🧘 Stretch: **${activeStretchPreset.preset.title}** (completed)  \n`);
+    }
+    md.appendMarkdown(`*Run 'Cancel Stretch Preset' to stop*  \n`);
   }
   
   md.appendMarkdown(`Session: ${sessionText}  \n`);
