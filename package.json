@@ -2,7 +2,7 @@
   "name": "breath-master",
   "displayName": "Breath Master",
   "description": "Master your breathing and coding flow with gentle gamification and mindful tracking.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "GSejas",
   "license": "MIT",
   "repository": {
@@ -199,6 +199,31 @@
       {
         "command": "breathMaster.cancelPledge",
         "title": "Breath Master: Cancel Active Pledge"
+      },
+      {
+        "command": "breathMaster.quickSessionAction",
+        "title": "Breath Master: Quick Session Action"
+      }
+      ,
+      {
+        "command": "breathMaster.quickPledge",
+        "title": "Breath Master: Quick Pledge / Start"
+      },
+      {
+        "command": "breathMaster.startStretchPreset",
+        "title": "Breath Master: Start Stretch Preset"
+      },
+      {
+        "command": "breathMaster.cancelStretchPreset",
+        "title": "Breath Master: Cancel Stretch Preset"
+      },
+      {
+        "command": "breathMaster.viewChallenges",
+        "title": "Breath Master: View Daily Challenges"
+      },
+      {
+        "command": "breathMaster.completeChallenge",
+        "title": "Breath Master: Complete Challenge"
       }
     ]
   },
@@ -209,15 +234,18 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:integration": "node ./dist/test/runTest.js",
-    "pretest": "npm run compile"
+    "pretest": "npm run compile",
+    "dev:install": "powershell -NoProfile -Command \"$ver = (Get-Content package.json | ConvertFrom-Json).version; npm run package; if ($LASTEXITCODE -eq 0) { code --install-extension ./breath-master-$ver.vsix }\"",
+    "package": "npm run compile && npx @vscode/vsce package"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.2.1",
     "@types/vscode": "^1.102.0",
     "@vscode/test-electron": "^2.5.2",
-    "glob": "^11.0.3",
-    "mocha": "^11.7.1",
+  "glob": "^11.0.3",
+  "mocha": "^11.7.1",
+  "@vscode/vsce": "^3.6.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }

@@ -1,6 +1,6 @@
 # Game Theory & Incentive Design
 
-The Breath Master system uses *soft commitments* and *linear transparent rewards* to avoid exploitative reinforcement structures.
+The Breath Master system uses *soft commitments* and *linear transparent rewards* (giving users/humans, `gamified agency`) to avoid exploitative reinforcement structures (patterns we are tring to `unlearn`).
 
 ## Design Goals
 - Encourage consistent mindful engagement

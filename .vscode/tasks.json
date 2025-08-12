@@ -21,6 +21,18 @@
             "group": "build",
             "problemMatcher": ["$tsc"],
             "detail": "Compiles the TypeScript files in watch mode."
+        },
+        {
+            "label": "dev-install",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "dev:install"],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "detail": "Compile, package, and install the current version VSIX in one step."
         }
     ]
 }
