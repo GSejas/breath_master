@@ -11,7 +11,7 @@ The **BreatheGlow** extension now features **visual breathing icons with 5 fun p
 - **Enhanced Tooltips**: Visual guide and pattern cycling info
 
 ### Files Created:
-- `breathe-glow-0.0.3.vsix` (8.46 KB) - The enhanced extension package
+- `breath-master-0.0.3.vsix` (8.46 KB) - The enhanced extension package
 - **Total Implementation**: 253 lines (96 engine + 157 extension)
 
 ### How to Use:
@@ -81,7 +81,7 @@ Add to your VS Code `settings.json`:
 npm run compile    # Build once
 npm run watch      # Build and watch for changes (currently running)
 vsce package       # Create .vsix package
-code --install-extension breathe-glow-0.0.1.vsix  # Install
+code --install-extension breath-master-0.0.1.vsix  # Install
 ```
 
 ### Press F5 in VS Code to launch Extension Development Host for testing!

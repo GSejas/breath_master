@@ -168,7 +168,7 @@ Format: `"inhale-hold-exhale-pause"` in seconds
 }
 ```
 
-## 🤝 Contributing
+## Contributing
 
 This extension demonstrates ethical technology design. Contributions should maintain:
 - User agency and control
@@ -176,7 +176,7 @@ This extension demonstrates ethical technology design. Contributions should main
 - Respectful engagement
 - Transparent functionality
 
-## 📄 License
+## License
 
 MIT License - Build mindful technology freely
 

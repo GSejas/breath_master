@@ -100,9 +100,9 @@ describe('OnboardingManager - Tutorial System', () => {
   });
 
   describe('Tutorial Step Content Validation', () => {
-    it('should provide 7 tutorial steps', () => {
+    it('should provide 8 tutorial steps', () => {
       const steps = onboardingManager.getTutorialSteps();
-      expect(steps).toHaveLength(7);
+      expect(steps).toHaveLength(8);
     });
 
     it('should have properly structured tutorial steps', () => {
@@ -120,18 +120,28 @@ describe('OnboardingManager - Tutorial System', () => {
         expect(otherSteps.some(s => s.id === step.id)).toBe(false);
         
         // Type should be valid
-        expect(['welcome', 'practice', 'choice', 'philosophy', 'license', 'ethics']).toContain(step.type);
+        expect(['welcome', 'practice', 'choice', 'philosophy', 'license', 'ethics', 'start-screen']).toContain(step.type);
       });
     });
 
-    it('should include cathedral entrance as first step', () => {
+    it('should include start screen as first step', () => {
       const steps = onboardingManager.getTutorialSteps();
       const firstStep = steps[0];
       
-      expect(firstStep.id).toBe('cathedral-entrance');
-      expect(firstStep.type).toBe('welcome');
-      expect(firstStep.title).toContain('Cathedral');
-      expect(firstStep.eonWisdom).toBeDefined();
+      expect(firstStep.id).toBe('game-start-screen');
+      expect(firstStep.type).toBe('start-screen');
+      expect(firstStep.title).toContain('BREATH MASTER');
+      expect(firstStep.imagePrompt).toBeDefined();
+    });
+
+    it('should include cathedral entrance as second step', () => {
+      const steps = onboardingManager.getTutorialSteps();
+      const secondStep = steps[1];
+      
+      expect(secondStep.id).toBe('cathedral-entrance');
+      expect(secondStep.type).toBe('welcome');
+      expect(secondStep.title).toContain('Cathedral');
+      expect(secondStep.eonWisdom).toBeDefined();
     });
 
     it('should include license information step', () => {

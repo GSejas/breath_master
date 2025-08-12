@@ -324,17 +324,72 @@ export class OnboardingManager {
     content: string; 
     eonWisdom?: string;
     action?: string;
-    type: 'welcome' | 'practice' | 'choice' | 'philosophy' | 'license' | 'ethics';
+    type: 'welcome' | 'practice' | 'choice' | 'philosophy' | 'license' | 'ethics' | 'start-screen';
     interactionRequired?: boolean;
+    imagePrompt?: string;
   }> {
     return [
       {
+        id: 'game-start-screen',
+        type: 'start-screen',
+        title: '🌟 BREATH MASTER',
+        content: `
+        <div class="game-start-screen">
+          <div class="game-logo">
+            <div class="logo-image-placeholder" id="heroImagePlaceholder">
+              <!-- TEXT-TO-IMAGE PROMPT PLACEHOLDER -->
+              <div class="image-prompt-display">
+                <p class="prompt-label">🎨 Vision Prompt:</p>
+                <p class="prompt-text">"An ancient mystical tree with glowing leaves in a digital cathedral, ethereal coding symbols floating around it, peaceful developer sitting in meditation, fantasy art style, soft green and blue lighting"</p>
+              </div>
+            </div>
+            <h1 class="game-title">BREATH MASTER</h1>
+            <p class="game-subtitle">A Journey Through the Cathedral of Code</p>
+          </div>
+          
+          <div class="start-screen-content">
+            <div class="adventure-invitation">
+              <h3>Welcome to Breath Master</h3>
+              <p>Integrate mindful breathing into your coding workflow with a privacy-first approach that helps reduce stress and improve focus during development.</p>
+              
+              <div class="journey-preview">
+                <h4>What You'll Learn:</h4>
+                <ul>
+                  <li>📊 How breathing patterns affect coding performance</li>
+                  <li>🎛️ Customizable breathing guidance in your status bar</li>
+                  <li>📈 Optional progress tracking (stays on your machine)</li>
+                  <li>⚙️ Settings and pattern customization</li>
+                </ul>
+              </div>
+              
+              <div class="commitment-box">
+                <p class="commitment-text">
+                  <strong>Quick 3-4 minute introduction</strong><br>
+                  Skip anytime with Escape key
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="start-actions">
+            <button class="decline-btn" data-choice="decline">
+              Skip Tutorial
+            </button>
+            <button class="accept-btn" data-choice="accept">
+              Get Started
+            </button>
+          </div>
+        </div>`,
+        imagePrompt: "Clean, modern interface showing a developer at their desk with subtle breathing visualization in VS Code, minimal and professional, soft blue accent lighting",
+        action: 'Start Tutorial'
+      },
+      {
         id: 'cathedral-entrance',
         type: 'welcome',
-        title: '🏰 Enter the Cathedral of Code',
-        content: 'Welcome, traveler, to the ancient Cathedral where code meets consciousness. Here, in this sacred grove of digital wisdom, your journey begins...',
-        eonWisdom: 'I am Eon, the ancient Tree of a Thousand Seasons. I have watched countless developers find their rhythm between breath and code. Let me guide you through this mystical realm.',
-        action: 'Begin the Journey'
+        title: '🏰 Welcome to the Cathedral of Code',
+        content: 'You have chosen to enter... The great doors creak open, revealing a magnificent space where ancient wisdom meets modern technology. Shafts of ethereal light illuminate floating code fragments that dance like digital fireflies.',
+        eonWisdom: 'Greetings, brave developer. I am Eon, the ancient Tree of a Thousand Seasons. I have watched countless coders find their rhythm between breath and creation. Your journey toward mindful mastery begins now.',
+        action: 'Meet Your Guide'
       },
       {
         id: 'game-rules',

@@ -65,7 +65,7 @@ describe('TutorialService - Core Logic', () => {
         expect(typeof step.content).toBe('string');
         
         expect(step.type).toBeDefined();
-        expect(['welcome', 'practice', 'choice', 'philosophy', 'license', 'ethics']).toContain(step.type);
+        expect(['welcome', 'practice', 'choice', 'philosophy', 'license', 'ethics', 'start-screen']).toContain(step.type);
         
         // Optional fields validation
         if (step.eonWisdom) {
@@ -82,9 +82,9 @@ describe('TutorialService - Core Logic', () => {
     it('should have steps in logical tutorial order', () => {
       const steps = onboardingManager.getTutorialSteps();
       
-      // First step should be welcome/entrance
-      expect(steps[0].type).toBe('welcome');
-      expect(steps[0].id).toBe('cathedral-entrance');
+      // First step should be start screen
+      expect(steps[0].type).toBe('start-screen');
+      expect(steps[0].id).toBe('game-start-screen');
       
       // Should include license step
       const hasLicense = steps.some(s => s.type === 'license');
@@ -199,8 +199,8 @@ describe('TutorialService - Core Logic', () => {
         }
       });
       
-      // First step should have beginning action
-      expect(steps[0].action).toContain('Begin');
+      // First step should have tutorial action
+      expect(steps[0].action).toContain('Tutorial');
       
       // Last step should have completion action  
       const lastStep = steps[steps.length - 1];

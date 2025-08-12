@@ -772,6 +772,22 @@ function startAnimation(): void {
       vscode.window.showInformationMessage(`${phase} - ${remainingSeconds}s`);
       lastPhase = phase;
     }
+
+    // Simple built-in background highlight (no custom theme colors):
+    // Use different backgrounds to signal distinct modes.
+    try {
+      const activeSession = meditationTracker.getActiveSession();
+      if (activeStretchPreset) {
+        // Stretch preset active: warning background (usually yellow/orange).
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+      } else if (activeSession) {
+        // Meditation session active: error background (usually red/pink).
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+      } else {
+        // Return to theme default.
+        statusBarItem.backgroundColor = undefined;
+      }
+    } catch { /* ignore if theme/color unavailable */ }
   }, tickMs);
 }
 

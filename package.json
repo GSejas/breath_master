@@ -1,6 +1,7 @@
 {
   "name": "breath-master",
   "displayName": "Breath Master",
+  "icon": "media/breath-master-iconic.png",
   "description": "Master your breathing and coding flow with gentle gamification and mindful tracking.",
   "version": "0.2.2",
   "publisher": "GSejas",

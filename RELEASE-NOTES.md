@@ -54,13 +54,13 @@
 ## 📦 Release Artifacts
 
 ### Files Created
-- `breathe-glow-0.0.3.vsix` (8.46 KB) - Installable extension package
+- `breath-master-0.0.3.vsix` (8.46 KB) - Installable extension package
 - Complete source code with tests
 - Documentation and usage guides
 
 ### Installation
 ```bash
-code --install-extension breathe-glow-0.0.3.vsix
+code --install-extension breath-master-0.0.3.vsix
 ```
 
 ### Git Repository
