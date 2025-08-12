@@ -7,12 +7,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GSejas/BreatheGlow.git"
+    "url": "https://github.com/GSejas/breath_master.git"
   },
   "bugs": {
-    "url": "https://github.com/GSejas/BreatheGlow/issues"
+    "url": "https://github.com/GSejas/breath_master/issues"
   },
-  "homepage": "https://github.com/GSejas/BreatheGlow#readme",
+  "homepage": "https://github.com/GSejas/breath_master#readme",
   "keywords": [
     "breathing",
     "mindfulness",
@@ -108,13 +108,20 @@
         },
         "breathMaster.engagementLevel": {
           "type": "string",
-          "enum": ["subtle", "moderate", "active"],
+          "enum": [
+            "subtle",
+            "moderate",
+            "active"
+          ],
           "default": "subtle",
           "description": "How often to show gentle encouragement messages."
         },
         "breathMaster.dataPrivacy": {
           "type": "string",
-          "enum": ["local-only", "export-allowed"],
+          "enum": [
+            "local-only",
+            "export-allowed"
+          ],
           "default": "local-only",
           "description": "Your data control: local-only (never leaves your machine) or export-allowed (you can export/backup)."
         }
@@ -157,14 +164,13 @@
     "pretest": "npm run compile"
   },
   "devDependencies": {
-    "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.2.1",
-    "@types/vscode": "^1.90.0",
+    "@types/vscode": "^1.102.0",
     "@vscode/test-electron": "^2.5.2",
     "glob": "^11.0.3",
     "mocha": "^11.7.1",
-    "typescript": "^5.4.0",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }
 }
