@@ -11,6 +11,9 @@ export interface MeditationStats {
   lastMeditationDate: string;
   totalMeditationTime: number; // lifetime in milliseconds
   sessionsToday: number;
+  // Extended (may be absent in older stored versions)
+  sessions?: SessionRecord[];
+  lastGoalMinutes?: number;
 }
 
 export interface MeditationLevel {
@@ -18,6 +21,42 @@ export interface MeditationLevel {
   title: string;
   xpRequired: number;
   icon: string;
+}
+
+// Session & pledge related interfaces
+export interface SessionRecord {
+  id: string;
+  startedAt: string;
+  endedAt: string;
+  activeMs: number;
+  cycles: number;
+  goalMinutes?: number;
+  goalBonusXP?: number;
+  pledgeMultiplier?: number;
+  finalXP: number;
+  pledgeHonored?: boolean;
+}
+
+export type SessionState = 'idle' | 'running' | 'paused';
+
+export interface ActiveSessionRuntime {
+  id: string;
+  startedAt: number;
+  lastResumeAt: number;
+  accumulatedActiveMs: number;
+  cycles: number;
+  state: SessionState;
+  goalMinutes?: number;
+  bonusApplied: boolean;
+}
+
+export interface ActivePledge {
+  templateId: string; // simple id e.g. pledge-15m-115
+  startedAt: string;
+  goalMinutes: number;
+  multiplier: number; // e.g. 1.15
+  completed?: boolean;
+  cancelled?: boolean;
 }
 
 const MEDITATION_LEVELS: MeditationLevel[] = [
@@ -38,6 +77,8 @@ export class MeditationTracker {
   private hoverStartTime: number = 0;
   private completedCycles: number = 0;
   private storage: any; // VS Code's ExtensionContext.globalState
+  private activeSession: ActiveSessionRuntime | null = null;
+  private activePledge: ActivePledge | null = null;
 
   constructor(private storageKey: string = 'breatheGlow.meditationStats', storage?: any) {
     this.storage = storage;
@@ -126,9 +167,15 @@ export class MeditationTracker {
   }
 
   onBreathingCycleComplete(): void {
+    // Legacy mode (hover tracking) still supported
     if (this.isHovering) {
       this.completedCycles++;
-      this.addXP(1); // 1 XP per completed cycle while hovering
+      this.addXP(1);
+    }
+    // New session mode
+    if (this.activeSession && this.activeSession.state === 'running') {
+      this.activeSession.cycles++;
+      this.addXP(1); // cycle XP always immediate & linear
     }
   }
 
@@ -244,8 +291,146 @@ export class MeditationTracker {
       todaySessionTime: 0,
       lastMeditationDate: '',
       totalMeditationTime: 0,
-      sessionsToday: 0
+      sessionsToday: 0,
+      sessions: []
     };
     this.saveStats();
+  }
+
+  // ---------------- Session Goal Logic ----------------
+  getGoalOptions(): { options: number[]; defaultMinutes: number } {
+    const level = this.getCurrentLevel().level;
+    if (level <= 2) return { options: [3,5,10], defaultMinutes: 5 };
+    if (level <= 4) return { options: [5,10,15], defaultMinutes: 10 };
+    if (level <= 6) return { options: [10,15,20], defaultMinutes: 15 };
+    if (level === 7) return { options: [15,20,25], defaultMinutes: 20 };
+    return { options: [20,30,40], defaultMinutes: 30 };
+  }
+
+  getActiveSession(): ActiveSessionRuntime | null { return this.activeSession ? { ...this.activeSession } : null; }
+  getActivePledge(): ActivePledge | null { return this.activePledge ? { ...this.activePledge } : null; }
+
+  startSession(goalMinutes?: number): { started: boolean; reason?: string; session?: ActiveSessionRuntime } {
+    if (this.activeSession) {
+      return { started: false, reason: 'Session already running or paused' };
+    }
+    const id = `sess-${Date.now()}`;
+    const chosenGoal = goalMinutes ?? this.stats.lastGoalMinutes ?? this.getGoalOptions().defaultMinutes;
+    this.stats.lastGoalMinutes = chosenGoal;
+    this.activeSession = {
+      id,
+      startedAt: Date.now(),
+      lastResumeAt: Date.now(),
+      accumulatedActiveMs: 0,
+      cycles: 0,
+      state: 'running',
+      goalMinutes: chosenGoal,
+      bonusApplied: false
+    };
+    this.saveStats();
+    return { started: true, session: { ...this.activeSession } };
+  }
+
+  pauseSession(): boolean {
+    if (!this.activeSession || this.activeSession.state !== 'running') return false;
+    const now = Date.now();
+    this.activeSession.accumulatedActiveMs += now - this.activeSession.lastResumeAt;
+    this.activeSession.state = 'paused';
+    return true;
+  }
+
+  resumeSession(): boolean {
+    if (!this.activeSession || this.activeSession.state !== 'paused') return false;
+    this.activeSession.lastResumeAt = Date.now();
+    this.activeSession.state = 'running';
+    return true;
+  }
+
+  endSession(): SessionRecord | null {
+    if (!this.activeSession) return null;
+    // Finalize active time
+    if (this.activeSession.state === 'running') {
+      const now = Date.now();
+      this.activeSession.accumulatedActiveMs += now - this.activeSession.lastResumeAt;
+    }
+    const active = this.activeSession;
+    const goalMs = (active.goalMinutes ?? 0) * 60000;
+    const completion = goalMs > 0 ? Math.min(1, active.accumulatedActiveMs / goalMs) : 0;
+    const timeBonusXP = goalMs > 0 ? Math.round(completion * ( (active.goalMinutes ?? 0) * 0.5 )) : 0;
+    // Apply pledge multiplier if honored
+    let pledgeMultiplier: number | undefined;
+    let pledgeHonored: boolean | undefined;
+    if (this.activePledge && !this.activePledge.cancelled) {
+      if (this.activePledge.goalMinutes === active.goalMinutes && completion >= 1) {
+        pledgeMultiplier = this.activePledge.multiplier;
+        pledgeHonored = true;
+      } else {
+        pledgeHonored = false;
+      }
+    }
+    const baseCycleXP = 0; // cycles already incrementally added
+    if (timeBonusXP) this.addXP(timeBonusXP);
+    if (pledgeMultiplier && pledgeHonored) {
+      const pre = this.stats.totalXP;
+      const bonus = Math.round((this.stats.totalXP - pre) * (pledgeMultiplier - 1));
+      if (bonus > 0) this.addXP(bonus); // practically 0 because baseCycleXP=0; left for future composite XP
+    }
+    const record: SessionRecord = {
+      id: active.id,
+      startedAt: new Date(active.startedAt).toISOString(),
+      endedAt: new Date().toISOString(),
+      activeMs: active.accumulatedActiveMs,
+      cycles: active.cycles,
+      goalMinutes: active.goalMinutes,
+      goalBonusXP: timeBonusXP,
+      pledgeMultiplier,
+      finalXP: this.stats.totalXP,
+      pledgeHonored
+    };
+    if (!this.stats.sessions) this.stats.sessions = [];
+    this.stats.sessions.push(record);
+    // Update daily/session time
+    this.addMeditationTime(active.accumulatedActiveMs);
+    this.activeSession = null;
+    if (this.activePledge && pledgeHonored) this.activePledge.completed = true; else if (this.activePledge) this.activePledge.completed = false;
+    this.saveStats();
+    return record;
+  }
+
+  // ---------------- Pledge Logic ----------------
+  makePledge(goalMinutes: number, multiplier: number = 1.15): { ok: boolean; reason?: string; pledge?: ActivePledge } {
+    if (this.activePledge && !this.activePledge.cancelled && !this.activePledge.completed) {
+      return { ok: false, reason: 'Pledge already active' };
+    }
+    this.activePledge = {
+      templateId: `pledge-${goalMinutes}m-${Math.round((multiplier-1)*100)}`,
+      startedAt: new Date().toISOString(),
+      goalMinutes,
+      multiplier
+    };
+    return { ok: true, pledge: { ...this.activePledge } };
+  }
+
+  cancelPledge(): boolean {
+    if (!this.activePledge || this.activePledge.cancelled) return false;
+    this.activePledge.cancelled = true;
+    return true;
+  }
+
+  // Display helpers
+  getSessionStatusBarText(): string {
+    if (this.activeSession) {
+      let activeMs = this.activeSession.accumulatedActiveMs;
+      if (this.activeSession.state === 'running') {
+        activeMs += Date.now() - this.activeSession.lastResumeAt;
+      }
+      const t = this.formatSessionTime(activeMs);
+      const prefix = this.activeSession.state === 'paused' ? '⏸️' : '🧘';
+      return `${prefix} ${t}` + (this.activeSession.goalMinutes ? ` / ${this.activeSession.goalMinutes}m` : '');
+    }
+    if (this.stats.lastGoalMinutes) {
+      return `🎯 ${this.stats.lastGoalMinutes}m goal`;
+    }
+    return '🎯 Set goal';
   }
 }

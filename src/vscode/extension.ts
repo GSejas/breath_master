@@ -59,6 +59,70 @@ export function activate(context: vscode.ExtensionContext): void {
   const toggleCommand = vscode.commands.registerCommand("breathMaster.toggle", toggleBreathing);
   const cycleCommand = vscode.commands.registerCommand("breathMaster.cyclePattern", cyclePattern);
   const meditateCommand = vscode.commands.registerCommand("breathMaster.toggleMeditation", toggleMeditation);
+  // New session / pledge related commands
+  const startSessionCommand = vscode.commands.registerCommand('breathMaster.startSession', async () => {
+    const tracker = meditationTracker as MeditationTracker;
+    // Offer quick pick of goal options
+    const goalProfile = tracker.getGoalOptions();
+    const pick = await vscode.window.showQuickPick(goalProfile.options.map(o => ({ label: `${o} minutes`, value: o })), { placeHolder: 'Select session goal' });
+    const chosen = pick ? pick.value : undefined;
+    const started = tracker.startSession(chosen);
+    if (started.started) {
+      vscode.window.showInformationMessage(`🧘 Session started${chosen ? ' • Goal ' + chosen + 'm' : ''}`);
+      updateGamificationDisplay();
+    } else {
+      vscode.window.showInformationMessage(`Cannot start session: ${started.reason}`);
+    }
+  });
+  const pauseSessionCommand = vscode.commands.registerCommand('breathMaster.pauseSession', () => {
+    if (meditationTracker.pauseSession()) {
+      vscode.window.showInformationMessage('⏸️ Session paused');
+      updateGamificationDisplay();
+    }
+  });
+  const resumeSessionCommand = vscode.commands.registerCommand('breathMaster.resumeSession', () => {
+    if (meditationTracker.resumeSession()) {
+      vscode.window.showInformationMessage('▶️ Session resumed');
+      updateGamificationDisplay();
+    }
+  });
+  const endSessionCommand = vscode.commands.registerCommand('breathMaster.endSession', () => {
+    const record = meditationTracker.endSession();
+    if (record) {
+      const mins = Math.round(record.activeMs/60000*10)/10;
+      const bonus = record.goalBonusXP ? ` • +${record.goalBonusXP} bonus XP` : '';
+      const pledge = record.pledgeMultiplier && record.pledgeHonored ? ` • Pledge honored x${record.pledgeMultiplier}` : '';
+      vscode.window.showInformationMessage(`✅ Session ${mins}m${bonus}${pledge}`);
+      updateGamificationDisplay();
+    }
+  });
+  const changeGoalCommand = vscode.commands.registerCommand('breathMaster.changeGoal', async () => {
+    const tracker = meditationTracker as MeditationTracker;
+    const goalProfile = tracker.getGoalOptions();
+    const pick = await vscode.window.showQuickPick(goalProfile.options.map(o => ({ label: `${o} minutes`, value: o })), { placeHolder: 'Select new default session goal' });
+    if (pick) {
+      tracker.startSession(pick.value); // start a fresh session directly
+      vscode.window.showInformationMessage(`🎯 New session started with goal ${pick.value}m`);
+      updateGamificationDisplay();
+    }
+  });
+  const makePledgeCommand = vscode.commands.registerCommand('breathMaster.makePledge', async () => {
+    const tracker = meditationTracker as MeditationTracker;
+    const goalProfile = tracker.getGoalOptions();
+    const pick = await vscode.window.showQuickPick(goalProfile.options.map(o => ({ label: `${o}m goal (+15% if honored)`, value: o })), { placeHolder: 'Select pledge goal' });
+    if (!pick) return;
+    const res = tracker.makePledge(pick.value, 1.15);
+    if (res.ok) {
+      vscode.window.showInformationMessage(`🎯 Pledge set: ${pick.value}m • +15% if goal fully met`);
+    } else {
+      vscode.window.showInformationMessage(`Cannot create pledge: ${res.reason}`);
+    }
+  });
+  const cancelPledgeCommand = vscode.commands.registerCommand('breathMaster.cancelPledge', () => {
+    if (meditationTracker.cancelPledge()) {
+      vscode.window.showInformationMessage('Pledge cancelled');
+    }
+  });
   const tourCommand = vscode.commands.registerCommand("breathMaster.showTour", showTour);
   const exportCommand = vscode.commands.registerCommand("breathMaster.exportData", exportData);
   const clearCommand = vscode.commands.registerCommand("breathMaster.clearData", clearData);
@@ -83,7 +147,14 @@ export function activate(context: vscode.ExtensionContext): void {
     tourCommand,
     exportCommand,
     clearCommand,
-    configListener
+  configListener,
+  startSessionCommand,
+  pauseSessionCommand,
+  resumeSessionCommand,
+  endSessionCommand,
+  changeGoalCommand,
+  makePledgeCommand,
+  cancelPledgeCommand
   );
 
   // Show tour if first time
@@ -214,8 +285,10 @@ function updateGamificationDisplay(): void {
     tooltip += `Today's meditation: ${todayTime}\n`;
   }
   
-  statusBarItemGamification.text = text || "🧘 Start meditating";
-  statusBarItemGamification.tooltip = tooltip + "Hover over breathMaster controls to track meditation time!";
+  // Session/goal status overlay
+  const sessionText = meditationTracker.getSessionStatusBarText();
+  statusBarItemGamification.text = (text ? text + ' • ' : '') + sessionText;
+  statusBarItemGamification.tooltip = tooltip + `Session: ${sessionText}`;
 }
 
 function setupHoverTracking(): void {

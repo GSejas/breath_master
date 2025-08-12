@@ -2,7 +2,7 @@
   "name": "breath-master",
   "displayName": "Breath Master",
   "description": "Master your breathing and coding flow with gentle gamification and mindful tracking.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "GSejas",
   "license": "MIT",
   "repository": {
@@ -124,6 +124,26 @@
           ],
           "default": "local-only",
           "description": "Your data control: local-only (never leaves your machine) or export-allowed (you can export/backup)."
+        },
+        "breathMaster.sessionGoal.showInStatus": {
+          "type": "boolean",
+          "default": true,
+            "description": "Show selected session time goal in the status bar when idle."
+        },
+        "breathMaster.sessionGoal.autoSuggest": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically suggest new goal set when leveling up."
+        },
+        "breathMaster.sessionGoal.rememberLast": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remember and reuse the last chosen session time goal."
+        },
+        "breathMaster.pledge.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable pledge (intentional commitment) feature for bonus XP (neutral if not completed)."
         }
       }
     },
@@ -151,6 +171,34 @@
       {
         "command": "breathMaster.clearData",
         "title": "Breath Master: Clear All Data"
+      },
+      {
+        "command": "breathMaster.startSession",
+        "title": "Breath Master: Start Session"
+      },
+      {
+        "command": "breathMaster.pauseSession",
+        "title": "Breath Master: Pause Session"
+      },
+      {
+        "command": "breathMaster.resumeSession",
+        "title": "Breath Master: Resume Session"
+      },
+      {
+        "command": "breathMaster.endSession",
+        "title": "Breath Master: End Session"
+      },
+      {
+        "command": "breathMaster.changeGoal",
+        "title": "Breath Master: Change Session Goal"
+      },
+      {
+        "command": "breathMaster.makePledge",
+        "title": "Breath Master: Make Pledge"
+      },
+      {
+        "command": "breathMaster.cancelPledge",
+        "title": "Breath Master: Cancel Active Pledge"
       }
     ]
   },
