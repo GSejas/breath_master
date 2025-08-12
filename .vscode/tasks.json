@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "compile",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "compile"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$tsc"],
+            "detail": "Compiles the TypeScript files to dist/"
+        },
+        {
+            "label": "watch",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "watch"],
+            "group": "build",
+            "problemMatcher": ["$tsc"],
+            "detail": "Compiles the TypeScript files in watch mode."
+        }
+    ]
+}

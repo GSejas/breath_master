@@ -1,0 +1,96 @@
+{
+  "name": "breathe-glow",
+  "displayName": "BreatheGlow",
+  "description": "A minimal, subtle breathing status bar indicator to encourage mindful pacing.",
+  "version": "0.0.3",
+  "publisher": "your-name",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:breatheGlow.toggle",
+    "onCommand:breatheGlow.cyclePattern"
+  ],
+  "main": "./dist/vscode/extension.js",
+  "browser": "./dist/vscode/extension.js",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "BreatheGlow",
+      "properties": {
+        "breatheGlow.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the breathing status item."
+        },
+        "breatheGlow.pattern": {
+          "type": "string",
+          "enum": [
+            "chill",
+            "medium",
+            "active",
+            "boxing",
+            "relaxing"
+          ],
+          "default": "chill",
+          "description": "Breathing pattern: chill (6-0-8-0), medium (5-0-5-0), active (4-2-4-1), boxing (4-4-4-4), relaxing (4-7-8-0)."
+        },
+        "breatheGlow.intensity": {
+          "type": "number",
+          "default": 0.6,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Visual intensity (0-1) mapped perceptually; lower is subtler."
+        },
+        "breatheGlow.tickMs": {
+          "type": "number",
+          "default": 100,
+          "minimum": 16,
+          "maximum": 1000,
+          "description": "Animation tick interval in milliseconds."
+        },
+        "breatheGlow.showBoth": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show breathing indicators on both left and right sides of status bar."
+        },
+        "breatheGlow.showNotifications": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show phase change notifications (for maximum visibility)."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "breatheGlow.toggle",
+        "title": "BreatheGlow: Toggle"
+      },
+      {
+        "command": "breatheGlow.cyclePattern",
+        "title": "BreatheGlow: Cycle Pattern"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:integration": "node ./dist/test/runTest.js",
+    "pretest": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.2.1",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^2.5.2",
+    "glob": "^11.0.3",
+    "mocha": "^11.7.1",
+    "typescript": "^5.4.0",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,14 @@
+// Include only essential files for the extension
+src/
+node_modules/
+out/
+.vscode/
+.eslintrc.json
+.gitignore
+CHANGELOG.md
+LICENSE
+jest.config.js
+*.test.ts
+*.spec.ts
+*.log
+*.vsix
