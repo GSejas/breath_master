@@ -4,7 +4,7 @@
  * and smooth raised-cosine curve transitions.
  */
 
-export type Pattern = "chill" | "medium" | "active" | "boxing" | "relaxing";
+export type Pattern = "chill" | "medium" | "active" | "boxing" | "relaxing" | "custom";
 
 interface PhaseDurations {
   inhale: number;
@@ -13,7 +13,7 @@ interface PhaseDurations {
   hold2: number;
 }
 
-const PATTERNS: Record<Pattern, PhaseDurations> = {
+const PATTERNS: Record<Exclude<Pattern, "custom">, PhaseDurations> = {
   chill:      { inhale: 6000, hold1: 0,    exhale: 8000, hold2: 0    }, // Slow and easy
   medium:     { inhale: 5000, hold1: 0,    exhale: 5000, hold2: 0    }, // Coherence breathing
   active:     { inhale: 4000, hold1: 2000, exhale: 4000, hold2: 1000 }, // Energizing
@@ -28,10 +28,41 @@ const PATTERNS: Record<Pattern, PhaseDurations> = {
 export class BreatheEngine {
   private durations: PhaseDurations;
   private startTime: number;
+  private customPattern?: PhaseDurations;
 
-  constructor(public pattern: Pattern = "chill") {
-    this.durations = PATTERNS[pattern];
+  constructor(public pattern: Pattern = "chill", customPattern?: string) {
+    this.durations = this.getPatternDurations(pattern, customPattern);
     this.startTime = Date.now();
+  }
+
+  private getPatternDurations(pattern: Pattern, customPattern?: string): PhaseDurations {
+    if (pattern === "custom") {
+      if (customPattern) {
+        return this.parseCustomPattern(customPattern);
+      } else {
+        // Fallback to chill if custom pattern is invalid
+        return PATTERNS.chill;
+      }
+    }
+    return PATTERNS[pattern as Exclude<Pattern, "custom">];
+  }
+
+  private parseCustomPattern(customPattern: string): PhaseDurations {
+    try {
+      const parts = customPattern.split('-').map(p => parseInt(p.trim()));
+      if (parts.length === 4 && parts.every(p => !isNaN(p) && p >= 0)) {
+        return {
+          inhale: parts[0] * 1000,
+          hold1: parts[1] * 1000,
+          exhale: parts[2] * 1000,
+          hold2: parts[3] * 1000
+        };
+      }
+    } catch (error) {
+      console.warn('Invalid custom pattern:', customPattern);
+    }
+    // Return default if parsing fails
+    return PATTERNS.chill;
   }
 
   get totalDuration(): number {
@@ -39,9 +70,9 @@ export class BreatheEngine {
     return d.inhale + d.hold1 + d.exhale + d.hold2;
   }
 
-  setPattern(pattern: Pattern): void {
+  setPattern(pattern: Pattern, customPattern?: string): void {
     this.pattern = pattern;
-    this.durations = PATTERNS[pattern];
+    this.durations = this.getPatternDurations(pattern, customPattern);
     this.startTime = Date.now(); // Reset cycle
   }
 

@@ -1,75 +1,149 @@
 {
-  "name": "breathe-glow",
-  "displayName": "BreatheGlow",
-  "description": "A minimal, subtle breathing status bar indicator to encourage mindful pacing.",
-  "version": "0.0.3",
-  "publisher": "your-name",
+  "name": "breath-master",
+  "displayName": "Breath Master",
+  "description": "Master your breathing and coding flow with gentle gamification and mindful tracking.",
+  "version": "0.1.0",
+  "publisher": "GSejas",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GSejas/BreatheGlow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GSejas/BreatheGlow/issues"
+  },
+  "homepage": "https://github.com/GSejas/BreatheGlow#readme",
+  "keywords": [
+    "breathing",
+    "mindfulness",
+    "wellness",
+    "meditation",
+    "productivity",
+    "focus",
+    "stress-relief",
+    "gamification",
+    "privacy",
+    "ethical-design"
+  ],
   "engines": {
     "vscode": "^1.90.0"
   },
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:breatheGlow.toggle",
-    "onCommand:breatheGlow.cyclePattern"
+    "onStartupFinished"
   ],
   "main": "./dist/vscode/extension.js",
   "browser": "./dist/vscode/extension.js",
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "BreatheGlow",
+      "title": "Breath Master",
       "properties": {
-        "breatheGlow.enabled": {
+        "breathMaster.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable the breathing status item."
         },
-        "breatheGlow.pattern": {
+        "breathMaster.pattern": {
           "type": "string",
           "enum": [
             "chill",
             "medium",
             "active",
             "boxing",
-            "relaxing"
+            "relaxing",
+            "custom"
           ],
           "default": "chill",
-          "description": "Breathing pattern: chill (6-0-8-0), medium (5-0-5-0), active (4-2-4-1), boxing (4-4-4-4), relaxing (4-7-8-0)."
+          "description": "Breathing pattern: chill (6-0-8-0), medium (5-0-5-0), active (4-2-4-1), boxing (4-4-4-4), relaxing (4-7-8-0), custom (use customPattern)."
         },
-        "breatheGlow.intensity": {
+        "breathMaster.customPattern": {
+          "type": "string",
+          "default": "4-4-4-4",
+          "pattern": "^\\d+-\\d+-\\d+-\\d+$",
+          "description": "Custom breathing pattern in seconds: inhale-hold-exhale-pause (e.g., '4-4-4-4')."
+        },
+        "breathMaster.intensity": {
           "type": "number",
           "default": 0.6,
           "minimum": 0,
           "maximum": 1,
           "description": "Visual intensity (0-1) mapped perceptually; lower is subtler."
         },
-        "breatheGlow.tickMs": {
+        "breathMaster.tickMs": {
           "type": "number",
           "default": 100,
           "minimum": 16,
           "maximum": 1000,
           "description": "Animation tick interval in milliseconds."
         },
-        "breatheGlow.showBoth": {
+        "breathMaster.showBoth": {
           "type": "boolean",
           "default": true,
           "description": "Show breathing indicators on both left and right sides of status bar."
         },
-        "breatheGlow.showNotifications": {
+        "breathMaster.showNotifications": {
           "type": "boolean",
           "default": false,
           "description": "Show phase change notifications (for maximum visibility)."
+        },
+        "breathMaster.enableGamification": {
+          "type": "boolean",
+          "default": false,
+          "description": "🎮 Opt-in to meditation tracking and gentle gamification. Your data stays local and private."
+        },
+        "breathMaster.showStreak": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show daily meditation streak counter."
+        },
+        "breathMaster.showSessionTimer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show today's meditation time."
+        },
+        "breathMaster.showXP": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show meditation XP and level progression."
+        },
+        "breathMaster.engagementLevel": {
+          "type": "string",
+          "enum": ["subtle", "moderate", "active"],
+          "default": "subtle",
+          "description": "How often to show gentle encouragement messages."
+        },
+        "breathMaster.dataPrivacy": {
+          "type": "string",
+          "enum": ["local-only", "export-allowed"],
+          "default": "local-only",
+          "description": "Your data control: local-only (never leaves your machine) or export-allowed (you can export/backup)."
         }
       }
     },
     "commands": [
       {
-        "command": "breatheGlow.toggle",
-        "title": "BreatheGlow: Toggle"
+        "command": "breathMaster.toggle",
+        "title": "Breath Master: Toggle"
       },
       {
-        "command": "breatheGlow.cyclePattern",
-        "title": "BreatheGlow: Cycle Pattern"
+        "command": "breathMaster.cyclePattern",
+        "title": "Breath Master: Cycle Pattern"
+      },
+      {
+        "command": "breathMaster.toggleMeditation",
+        "title": "Breath Master: Toggle Meditation Session"
+      },
+      {
+        "command": "breathMaster.showTour",
+        "title": "Breath Master: Show Welcome Tour"
+      },
+      {
+        "command": "breathMaster.exportData",
+        "title": "Breath Master: Export Your Data"
+      },
+      {
+        "command": "breathMaster.clearData",
+        "title": "Breath Master: Clear All Data"
       }
     ]
   },
