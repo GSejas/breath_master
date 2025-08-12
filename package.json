@@ -145,6 +145,24 @@
           "default": true,
           "description": "Enable pledge (intentional commitment) feature for bonus XP (neutral if not completed)."
         }
+        ,
+        "breathMaster.stretch.compactMode": {
+          "type": "string",
+          "enum": ["auto", "on", "off"],
+          "default": "auto",
+          "description": "Display stretch preset notifications in compact form (action + time only). auto: shorten longer entries; on: always compact; off: always full with quotes."
+        },
+        "breathMaster.stretch.showEonQuotes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Eon's inspirational quote lines inside stretch preset reminders. Disable for ultra-minimal prompts."
+        },
+        "breathMaster.stretch.iconStyle": {
+          "type": "string",
+          "enum": ["emoji", "none"],
+          "default": "emoji",
+          "description": "Icon style for stretch reminders (emoji or none). (Future: svg)."
+        }
       }
     },
     "commands": [
@@ -224,6 +242,14 @@
       {
         "command": "breathMaster.completeChallenge",
         "title": "Breath Master: Complete Challenge"
+      },
+      {
+        "command": "breathMaster.openDonations",
+        "title": "Breath Master: Donate / Support"
+      },
+      {
+        "command": "breathMaster.showLeaderboard",
+        "title": "Breath Master: (Preview) Show Leaderboard"
       }
     ]
   },

@@ -21,6 +21,30 @@ let quickPledgeRegistered = false;
 // Stretch preset scheduling
 interface StretchPresetStep { label: string; afterMinutes: number }
 interface StretchPreset { id: string; title: string; description: string; steps: StretchPresetStep[] }
+// Minimal parsed form for compact mode
+interface ParsedStretchStep { raw: string; action: string; duration?: string; quote?: string; icon?: string }
+function parseStretchLabel(label: string): ParsedStretchStep {
+  // Pattern: ICON? text (duration) - "quote"
+  const iconMatch = /^([\p{Emoji_Presentation}\p{Emoji}\u200d]+)\s+/u.exec(label);
+  let rest = label;
+  let icon: string | undefined;
+  if (iconMatch) { icon = iconMatch[1]; rest = rest.slice(icon.length).trimStart(); }
+  let quote: string | undefined;
+  const quoteIdx = rest.indexOf('"');
+  if (quoteIdx !== -1) {
+    const parts = rest.split('"');
+    if (parts.length >= 3) {
+      quote = parts[1];
+      rest = rest.replace(`- "${quote}"`, '').trim();
+    }
+  }
+  let duration: string | undefined;
+  const durMatch = /\(([^)]+)\)/.exec(rest);
+  if (durMatch) {
+    duration = durMatch[1];
+  }
+  return { raw: label, action: rest, duration, quote, icon };
+}
 const STRETCH_PRESETS: StretchPreset[] = [
   {
     id: 'gentle-break',
@@ -208,9 +232,43 @@ export function activate(context: vscode.ExtensionContext): void {
     const preset = STRETCH_PRESETS.find(p => p.id === pick.id)!;
     const base = Date.now();
     const timers: NodeJS.Timeout[] = [];
-    preset.steps.forEach(step => {
+    const config = vscode.workspace.getConfiguration('breathMaster');
+    const compactMode = config.get<string>('stretch.compactMode', 'auto');
+    const showQuotes = config.get<boolean>('stretch.showEonQuotes', true);
+    const iconStyle = config.get<string>('stretch.iconStyle', 'emoji');
+    const formatStep = (label: string): string => {
+      const parsed = parseStretchLabel(label);
+      const parts: string[] = [];
+      if (iconStyle === 'emoji' && parsed.icon) parts.push(parsed.icon);
+      // Decide compactness
+      const alwaysCompact = compactMode === 'on';
+      const neverCompact = compactMode === 'off';
+      const autoCompact = compactMode === 'auto';
+      const longAction = parsed.action.length > 40;
+      const useCompact = alwaysCompact || (autoCompact && longAction);
+      if (useCompact) {
+        // action part until first '(' for concise form
+        let act = parsed.action;
+        // Remove quote if any remained
+        if (parsed.duration) {
+          // Keep only portion before '(' for brevity if long
+          if (longAction) {
+            const firstParen = act.indexOf('(');
+            if (firstParen !== -1) act = act.slice(0, firstParen).trim();
+          }
+        }
+        parts.push(act);
+        if (parsed.duration) parts.push(`(${parsed.duration})`);
+      } else {
+        parts.push(parsed.action);
+        if (parsed.duration && !parsed.action.includes(`(${parsed.duration})`)) parts.push(`(${parsed.duration})`);
+        if (showQuotes && parsed.quote) parts.push(`“${parsed.quote}”`);
+      }
+      return parts.join(' ').replace(/\s+/g, ' ');
+    };
+    preset.steps.forEach((step: StretchPresetStep) => {
       const t = setTimeout(() => {
-        vscode.window.showInformationMessage(`🧘 ${preset.title}: ${step.label}`);
+        vscode.window.showInformationMessage(`🧘 ${preset.title}: ${formatStep(step.label)}`);
       }, step.afterMinutes * 60000);
       timers.push(t);
     });
@@ -389,6 +447,32 @@ export function activate(context: vscode.ExtensionContext): void {
   const exportCommand = vscode.commands.registerCommand("breathMaster.exportData", exportData);
   const clearCommand = vscode.commands.registerCommand("breathMaster.clearData", clearData);
 
+  // Donation & leaderboard preview commands
+  const donationCommand = vscode.commands.registerCommand('breathMaster.openDonations', async () => {
+    const choice = await vscode.window.showInformationMessage(
+      'Support Sequoia & Costa Rica conservation (APAMI) or fuel development?',
+      '🌳 Donate to APAMI',
+      '🌲 Sequoia Conservation',
+      '☕ Buy Developer a Coffee',
+      'Cancel'
+    );
+    if (!choice || choice === 'Cancel') return;
+    const map: Record<string,string> = {
+      '🌳 Donate to APAMI': 'https://example.org/apami',
+      '🌲 Sequoia Conservation': 'https://example.org/sequoia-fund',
+      '☕ Buy Developer a Coffee': 'https://buymeacoffee.com/'
+    };
+    const url = map[choice];
+    if (url) {
+      vscode.env.openExternal(vscode.Uri.parse(url));
+      vscode.window.showInformationMessage('Opening external contribution page...');
+    }
+  });
+
+  const leaderboardCommand = vscode.commands.registerCommand('breathMaster.showLeaderboard', async () => {
+    vscode.window.showInformationMessage('🏆 Leaderboards planned: opt-in, privacy-first, company/team & global tiers. (Coming soon)');
+  });
+
   // Register for configuration changes
   const configListener = vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
     if (event.affectsConfiguration("breathMaster")) {
@@ -417,7 +501,9 @@ export function activate(context: vscode.ExtensionContext): void {
     changeGoalCommand,
     makePledgeCommand,
     cancelPledgeCommand,
-    quickSessionActionCommand
+    quickSessionActionCommand,
+    donationCommand,
+    leaderboardCommand
   );
 
   // Show tour if first time
