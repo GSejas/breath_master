@@ -28,7 +28,8 @@ const MEDITATION_LEVELS: MeditationLevel[] = [
   { level: 5, title: "Mindful Master", xpRequired: 500, icon: "✨" },
   { level: 6, title: "Breathing Sage", xpRequired: 750, icon: "🧘" },
   { level: 7, title: "Code Mystic", xpRequired: 1000, icon: "⭐" },
-  { level: 8, title: "Digital Buddha", xpRequired: 1500, icon: "🌌" }
+  // Renamed final level to align with product branding
+  { level: 8, title: "Breath Master", xpRequired: 1500, icon: "🌌" }
 ];
 
 export class MeditationTracker {

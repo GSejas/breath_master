@@ -1,29 +1,29 @@
 # 🧘‍♀️ Breath Master - Mindful Coding with Ethical Gamification
 
-Transform your coding experience with gentle breathing guidance and optional progress tracking that respects your privacy and autonomy.
+Are you? The next Breath Master? Transform your coding experience with gentle breathing guidance and optional progress tracking that respects your privacy and autonomy. Gamify, gently, and add flow into your workflow.
 
 ## ✨ Features
 
-### 🫁 **Core Breathing**
+### **Core Breathing**
 - **5 Preset Patterns**: Chill, Medium, Active, Boxing, Relaxing
 - **Custom Patterns**: Create your own with simple format: `4-4-4-4` (inhale-hold-exhale-pause)
 - **Visual Breathing Cues**: Subtle status bar animation guides your breath
 - **Dual Indicators**: Left (breathing) and right (pattern controls) status bar items
 
-### 🎮 **Ethical Gamification** (Opt-in)
+### **Ethical Gamification** (Opt-in)
 - **Privacy-First**: All data stays on your machine, never uploaded
 - **Meditation Tracking**: Track mindful moments with breathing cycles
-- **Level Progression**: From Mindful Rookie to Digital Buddha
+- **Level Progression**: From Mindful Rookie to Breath Master
 - **Daily Streaks**: Gentle encouragement without pressure
 - **Session Timer**: See today's meditation progress
 
-### 🛡️ **Privacy & Control**
+### **Privacy & Control**
 - **Local-Only Storage**: Data never leaves your computer
 - **Full Export**: JSON export of your progress anytime
 - **Complete Control**: Clear data, adjust privacy settings
 - **No Accounts**: Works entirely offline
 
-### 🌟 **Onboarding & Engagement**
+### **Onboarding & Engagement**
 - **Welcome Tour**: Gentle introduction to all features
 - **Exponential Backoff**: Messages become less frequent over time
 - **User-Controlled**: Set engagement to off/subtle/moderate/active
@@ -73,7 +73,7 @@ Transform your coding experience with gentle breathing guidance and optional pro
 
 Progress through mindful titles as you build a breathing practice:
 
-🌱 **Mindful Rookie** → 🌿 **Breathing Novice** → 🍃 **Calm Coder** → 🌳 **Zen Developer** → ✨ **Mindful Master** → 🧘 **Breathing Sage** → ⭐ **Code Mystic** → 🌌 **Digital Buddha**
+🌱 **Mindful Rookie** → 🌿 **Breathing Novice** → 🍃 **Calm Coder** → 🌳 **Zen Developer** → ✨ **Mindful Master** → 🧘 **Breathing Sage** → ⭐ **Code Mystic** → 🌌 **Breath Master**
 
 ## 🔐 Privacy Promise
 

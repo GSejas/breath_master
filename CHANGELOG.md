@@ -37,7 +37,7 @@ This release transforms BreatheGlow into **Breath Master**, introducing comprehe
 - **Privacy-First Design**: All data stays local, opt-in tracking, full export/clear capabilities
 
 #### Gamification Features
-- **8-Level Progression**: From "Mindful Rookie" to "Digital Buddha" with meaningful titles
+- **8-Level Progression**: From "Mindful Rookie" to "Breath Master" with meaningful titles
 - **Daily Streak Tracking**: Gentle encouragement without pressure or manipulation
 - **Session Timer**: Track today's meditation progress
 - **XP System**: Earn experience through completed breathing cycles during meditation sessions

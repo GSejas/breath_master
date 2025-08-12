@@ -1,29 +1,43 @@
 # 🧘‍♀️ Breath Master - Mindful Coding with Ethical Gamification
 
-Transform your coding experience with gentle breathing guidance and optional progress tracking that respects your privacy and autonomy.
+## 🎮 Mindful Coding Adventure
+
+Transform your coding sessions into a mindful journey! Breath Master turns meditation into a fun, gamified experience while respecting your privacy and wellbeing. 
+
+![Breathing Animation](https://placeholder.com/breathing-guide.gif)
+
+**🏆 Challenge Yourself!** Track your progress, earn mindfulness achievements, and watch as you evolve from a Mindful Rookie to a Breath Master!
+
+![Level Progress](https://placeholder.com/level-progression.png)
+
+**🔥 Build Your Streak!** Stay consistent with your breathing practice and watch your daily streak grow - all while staying productive and centered during coding sessions.
+
+Remember: this is mindfulness with a playful twist - not a competitive race. Your wellbeing journey happens at your own pace, on your own terms.
+
+![Streaks Display](https://placeholder.com/streaks-display.gif)
 
 ## ✨ Features
 
-### 🫁 **Core Breathing**
+### **Core Breathing**
 - **5 Preset Patterns**: Chill, Medium, Active, Boxing, Relaxing
 - **Custom Patterns**: Create your own with simple format: `4-4-4-4` (inhale-hold-exhale-pause)
 - **Visual Breathing Cues**: Subtle status bar animation guides your breath
 - **Dual Indicators**: Left (breathing) and right (pattern controls) status bar items
 
-### 🎮 **Ethical Gamification** (Opt-in)
+###  **Ethical Gamification** (Opt-in)
 - **Privacy-First**: All data stays on your machine, never uploaded
 - **Meditation Tracking**: Track mindful moments with breathing cycles
-- **Level Progression**: From Mindful Rookie to Digital Buddha
+- **Level Progression**: From Mindful Rookie to Breath Master
 - **Daily Streaks**: Gentle encouragement without pressure
 - **Session Timer**: See today's meditation progress
 
-### 🛡️ **Privacy & Control**
+###  **Privacy & Control**
 - **Local-Only Storage**: Data never leaves your computer
 - **Full Export**: JSON export of your progress anytime
 - **Complete Control**: Clear data, adjust privacy settings
 - **No Accounts**: Works entirely offline
 
-### 🌟 **Onboarding & Engagement**
+###  **Onboarding & Engagement**
 - **Welcome Tour**: Gentle introduction to all features
 - **Exponential Backoff**: Messages become less frequent over time
 - **User-Controlled**: Set engagement to off/subtle/moderate/active
@@ -73,7 +87,7 @@ Transform your coding experience with gentle breathing guidance and optional pro
 
 Progress through mindful titles as you build a breathing practice:
 
-🌱 **Mindful Rookie** → 🌿 **Breathing Novice** → 🍃 **Calm Coder** → 🌳 **Zen Developer** → ✨ **Mindful Master** → 🧘 **Breathing Sage** → ⭐ **Code Mystic** → 🌌 **Digital Buddha**
+🌱 **Mindful Rookie** → 🌿 **Breathing Novice** → 🍃 **Calm Coder** → 🌳 **Zen Developer** → ✨ **Mindful Master** → 🧘 **Breathing Sage** → ⭐ **Code Mystic** → 🌌 **Breath Master**
 
 ## 🔐 Privacy Promise
 

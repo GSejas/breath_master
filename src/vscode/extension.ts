@@ -294,42 +294,22 @@ async function toggleMeditation(): Promise<void> {
 }
 
 async function showTour(): Promise<void> {
-  const tourSteps = onboardingManager.getTourSteps();
-  
-  for (const step of tourSteps) {
-    const action = await vscode.window.showInformationMessage(
-      step.title,
-      { modal: true, detail: step.content },
-      { title: step.action || "Continue" },
-      { title: "Skip Tour" }
-    );
-    
-    if (action?.title === "Skip Tour") {
-      break;
-    }
-    
-    // Special handling for gamification opt-in step
-    if (step.title.includes("Optional Gamification")) {
-      const optIn = await vscode.window.showInformationMessage(
-        "🎮 Enable Meditation Tracking?",
-        { modal: true, detail: "Track your mindful moments with gentle gamification. Your data stays completely private and local." },
-        { title: "Yes, let's try it!" },
-        { title: "Maybe later" }
-      );
-      
-      if (optIn?.title === "Yes, let's try it!") {
-        const config = vscode.workspace.getConfiguration("breathMaster");
-        await config.update("enableGamification", true, vscode.ConfigurationTarget.Global);
-        onboardingManager.markTourCompleted(true);
-        vscode.window.showInformationMessage("🌟 Awesome! Your meditation tracking is now enabled.");
-      } else {
-        onboardingManager.markTourCompleted(false);
-      }
-    }
-  }
-  
-  if (!onboardingManager.getState().hasSeenTour) {
+  // Simplified single-step, non-modal welcome to avoid notification fatigue
+  const picked = await vscode.window.showInformationMessage(
+    '🫁 Welcome to Breath Master — cultivate a calm, continuous flow while you code.',
+    'Enable Breath Master Mode', // enable gamification/tracking
+    'Skip'
+  );
+
+  if (picked === 'Enable Breath Master Mode') {
+    const config = vscode.workspace.getConfiguration('breathMaster');
+    await config.update('enableGamification', true, vscode.ConfigurationTarget.Global);
+    onboardingManager.markTourCompleted(true);
+    vscode.window.showInformationMessage('🌟 Breath Master mode enabled. Track mindful progress anytime.');
+  } else {
+    // Mark seen so we do not re-prompt every startup
     onboardingManager.markTourCompleted(false);
+    vscode.window.showInformationMessage('✨ You can enable Breath Master mode later from settings.');
   }
 }
 

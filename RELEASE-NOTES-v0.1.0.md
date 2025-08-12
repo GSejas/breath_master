@@ -10,7 +10,7 @@
 - Comprehensive privacy and ethical design documentation
 
 ### 🎮 Ethical Gamification (Opt-in)
-- **8-Level Progression System**: From Mindful Rookie to Digital Buddha
+- **8-Level Progression System**: From Mindful Rookie to Breath Master
 - **Daily Streak Tracking**: Gentle encouragement without manipulation
 - **Meditation Session Timer**: Track your mindful coding moments
 - **XP System**: Earn experience through completed breathing cycles
@@ -51,7 +51,7 @@ code --install-extension GSejas.breath-master
 ```
 🌱 Mindful Rookie (0 XP)      🧘 Breathing Sage (750 XP)
 🌿 Breathing Novice (50 XP)   ⭐ Code Mystic (1000 XP)  
-🍃 Calm Coder (150 XP)        🌌 Digital Buddha (1500 XP)
+🍃 Calm Coder (150 XP)        🌌 Breath Master (1500 XP)
 🌳 Zen Developer (300 XP)
 ✨ Mindful Master (500 XP)
 ```
