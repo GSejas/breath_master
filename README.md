@@ -10,31 +10,13 @@
      ╰─────────────────────────────────────╯
   ```
   
-  [![VS Code Marketplace](https://img.shields.io/- **APAMI / Costa Rica Reforestation**: https://giving.classy.org/campaign/644782/donate
-
-```
-     ╭─────────────────────────────────────────╮
-     │     🗺️  R O A D M A P   A H E A D 🗺️     │
-     ╰─────────────────────────────────────────╯
-```
-
-## 🗺️ Subtle Roadmap (Non-Pushy)
-
-```
-    ✅ Daily Challenges (Eon's whispers): DONE
-    ✅ Stretch Presets + Compact Mode: DONE
-    🔄 Gentle Reminder Cadence (idle only): EXPERIMENTAL
-    💭 SVG Movement Icons (minimal set): CONSIDERING
-    🏗️ Opt‑In Team Leaderboards (privacy-first): DESIGN PHASE
-    🔮 Enterprise Wellness Export Adapter: FUTURE
-    👥 Pair / Group Ritual Windows: RESEARCH
-    🌿 Conservation Insight Badge (weekly consistency): MAYBE
-```o-marketplace/v/GSejas.breath-master)](https://marketplace.visualstudio.com/items?itemName=GSejas.breath-master)
+  [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/GSejas.breath-master)](https://marketplace.visualstudio.com/items?itemName=GSejas.breath-master)
   [![VS Code Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/GSejas.breath-master)](https://marketplace.visualstudio.com/items?itemName=GSejas.breath-master)
   [![GitHub Stars](https://img.shields.io/github/stars/GSejas/breath_master)](https://github.com/GSejas/breath_master)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![Documentation](https://img.shields.io/badge/docs-comprehensive-blue)](./docs/DOCUMENTATION-OVERVIEW.md)
 </div>
+
 
 ```
     🌱 ～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～ 🌱
@@ -43,19 +25,14 @@
  ╱     Breath Master turns meditation into a fun, gamified experience      ╲
 ╱      while respecting your privacy and wellbeing.                        ╲
 ╲                                                                          ╱
- ╲    ✨ Challenge Yourself ✨ Build Your Streak ✨ Stay Centered ✨      ╱
+ ╲                 ✨ Stay Centered ✨                                     ╱
   ╲                                                                      ╱
    ╲____________________________________________________________________╱
     🌿 ～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～ 🌿
-``` 
+```
 
-![Breathing Animation](./resources/gif-animation-vscode.gif)
-
-**Challenge Yourself!** Track your progress, earn mindfulness achievements, and watch as you evolve from a Mindful Rookie to a Breath Master!
-
-![Animation Modes](./resources/gif-animation-modes.gif)
-
-** Build Your Streak!** Stay consistent with your breathing practice and watch your daily streak grow - all while staying productive and centered during coding sessions.
+| ![Breathing Animation](./resources/gif-animation-vscode.gif) | ![Animation Modes](./resources/gif-animation-modes.gif) | ![Tooltip Demo](./resources/tooltip-b-m-day-2.png) |
+|--------------------------------------------------------------|----------------------------------------------------------|-----------------------------------------------------|
 
 Remember: this is mindfulness with a playful twist - not a competitive race. Your wellbeing journey happens at your own pace, on your own terms.
 
@@ -137,13 +114,13 @@ Remember: this is mindfulness with a playful twist - not a competitive race. You
 
 ## 🎯 Installation & Setup
 ```
-            Step 1: Install        Step 2: Breathe
-               │                      │
-               ▼                      ▼
-          ╭─────────╮          ╭─────────╮
-          │ VS Code │ ────────►│ Status  │
-          │Marketplace│        │   Bar   │
-          ╰─────────╯          ╰─────────╯
+    Step 1: Install        Step 2: Activate       Step 3: Breathe
+       │                      │                      │
+       ▼                      ▼                      ▼
+  ╭─────────╮           ╭─────────╮           ╭─────────╮
+  │ VS Code │ ────────► │ Command │ ────────► │ Status  │
+  │Marketplace│          │Palette │           │   Bar   │
+  ╰─────────╯           ╰─────────╯           ╰─────────╯
 ```
 
 1. **Install**: Search "Breath Master" in VS Code extensions
