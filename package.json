@@ -3,7 +3,7 @@
   "displayName": "Breath Master",
   "icon": "media/breath-master-iconic.png",
   "description": "Master your breathing and coding flow with gentle gamification and mindful tracking.",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "publisher": "GSejas",
   "license": "MIT",
   "repository": {
@@ -301,8 +301,16 @@
     "test:cov": "vitest run --coverage",
     "pretest": "npm run compile",
     "publish": "vsce publish",
+    "package": "npm run compile && npx @vscode/vsce package",
     "dev:install": "powershell -NoProfile -Command \"$ver = (Get-Content package.json | ConvertFrom-Json).version; npm run package; if ($LASTEXITCODE -eq 0) { code --install-extension ./breath-master-$ver.vsix }\"",
-    "package": "npm run compile && npx @vscode/vsce package"
+    "version:patch": "npm version patch && git push && git push --tags",
+    "version:minor": "npm version minor && git push && git push --tags",
+    "version:major": "npm version major && git push && git push --tags",
+    "release:patch": "npm run test && npm run version:patch && npm run package && npm run publish",
+    "release:minor": "npm run test && npm run version:minor && npm run package && npm run publish",
+    "release:major": "npm run test && npm run version:major && npm run package && npm run publish",
+    "tag:current": "powershell -NoProfile -Command \"$ver = (Get-Content package.json | ConvertFrom-Json).version; git tag v$ver; git push origin v$ver\"",
+    "prerelease": "npm run test"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
