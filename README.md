@@ -1,28 +1,27 @@
-## �‍♀️ Breath Master - Mindful Coding with Ethical Gamification
+## Breath Master
 
 [![Documentation](https://img.shields.io/badge/docs-comprehensive-blue)](./docs/DOCUMENTATION-OVERVIEW.md)
 
-## 🎮 Mindful Coding Adventure🧘‍♀️ Breath Master - Mindful Coding with Ethical Gamification
-
-## 🎮 Mindful Coding Adventure
+## Mindful Coding Adventure
 
 Transform your coding sessions into a mindful journey! Breath Master turns meditation into a fun, gamified experience while respecting your privacy and wellbeing. 
 
 ![Breathing Animation](./resources/gif-animation-vscode.gif)
 
-**🏆 Challenge Yourself!** Track your progress, earn mindfulness achievements, and watch as you evolve from a Mindful Rookie to a Breath Master!
+**Challenge Yourself!** Track your progress, earn mindfulness achievements, and watch as you evolve from a Mindful Rookie to a Breath Master!
 
 ![Animation Modes](./resources/gif-animation-modes.gif)
 
-**🔥 Build Your Streak!** Stay consistent with your breathing practice and watch your daily streak grow - all while staying productive and centered during coding sessions.
+** Build Your Streak!** Stay consistent with your breathing practice and watch your daily streak grow - all while staying productive and centered during coding sessions.
 
 Remember: this is mindfulness with a playful twist - not a competitive race. Your wellbeing journey happens at your own pace, on your own terms.
 
 ![Wide Animation Demo](./resources/gif-animation-modes-wide.gif)
 
-## ✨ Features
+## Features
 
 ### **Core Breathing**
+- **Continuous and minimal**: Barely noticeable, always guiding.
 - **5 Preset Patterns**: Chill, Medium, Active, Boxing, Relaxing
 - **Custom Patterns**: Create your own with simple format: `4-4-4-4` (inhale-hold-exhale-pause)
 - **Visual Breathing Cues**: Subtle status bar animation guides your breath
