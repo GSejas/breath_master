@@ -63,8 +63,12 @@ Check out the [complete User Guide](./docs/USER-GUIDE.md) for detailed instructi
 ┌────────────────────────────────────────────────────────────────────────────┐
 │  (Left) Breathing Indicator:  ●▲ Inhale 3s                                 │
 │                                                                            │
-│  (Right cluster)  🍃 Calm Coder • 🔥 5d • 06m • ▶ Goal 10m                  │
-│      Legend: Level • Streak • Today Time • Session State / Pledge          │
+│  (Right cluster)  ⏹  Lvl: 2 ⏸                                               │
+│      Stop indicator • Level • Control button                               │
+│                                                                            │
+│  • Stop indicator (⏹) - appears when active, click to stop anything        │
+│  • Level display - configurable: "L 2", "Lvl: 2", or "🌱 2"               │
+│  • Control button - smart: ▶ start, ⏸ pause, ▶ resume                     │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -72,20 +76,33 @@ Check out the [complete User Guide](./docs/USER-GUIDE.md) for detailed instructi
 
 ```json
 {
-  "breathMaster.pattern": "chill",           // Breathing pattern
-  "breathMaster.customPattern": "4-4-4-4",   // Custom timing (seconds)
-  "breathMaster.intensity": 0.6,             // Visual intensity
-  "breathMaster.enableGamification": false,  // Opt-in tracking
-  "breathMaster.dataPrivacy": "local-only"   // Privacy control
+  "breathMaster.pattern": "chill",                    // Breathing pattern
+  "breathMaster.customPattern": "4-4-4-4",            // Custom timing (seconds)
+  "breathMaster.intensity": 0.6,                      // Visual intensity
+  "breathMaster.enableGamification": false,           // Opt-in tracking
+  "breathMaster.dataPrivacy": "local-only",           // Privacy control
+  "breathMaster.gamificationCommitment": "balanced"   // UI style: minimal/balanced/nature
 }
 ```
 
 ## 🎯 Commands
 
+### Core Controls
 - `Breath Master: Toggle` - Start/stop breathing animation
 - `Breath Master: Cycle Pattern` - Try different breathing patterns
 - `Breath Master: Show Welcome Tour` - Replay the introduction
-- `Breath Master: Toggle Meditation Session` - Start/stop tracking
+
+### Session Management
+- `Breath Master: Start Session` - Begin a timed meditation session
+- `Breath Master: Pause Session` - Pause active session
+- `Breath Master: Resume Session` - Resume paused session
+- `Breath Master: End Session` - Stop session and record progress
+
+### Universal Controls (Status Bar)
+- **Stop Indicator (⏹)** - Click to immediately stop any active session/stretch
+- **Control Button (▶/⏸)** - Context-aware start/pause/resume actions
+
+### Stretch & Progress
 - `Breath Master: Start Stretch Preset` - Begin a guided stretching routine
 - `Breath Master: Cancel Stretch Preset` - Stop the current stretch preset
 - `Breath Master: Export Your Data` - Save your progress

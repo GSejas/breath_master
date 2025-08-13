@@ -3,7 +3,7 @@
   "displayName": "Breath Master",
   "icon": "media/breath-master-iconic.png",
   "description": "Master your breathing and coding flow with gentle gamification and mindful tracking.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "GSejas",
   "license": "MIT",
   "repository": {
@@ -191,6 +191,16 @@
           ],
           "default": "low",
           "description": "Background encouragement frequency from Eon (off = none). Low: ~2/day, Standard: ~4/day, High: up to 6/day (only when idle & no session running)."
+        },
+        "breathMaster.gamificationCommitment": {
+          "type": "string",
+          "enum": [
+            "minimal",
+            "balanced",
+            "nature"
+          ],
+          "default": "balanced",
+          "description": "Level of gamification elements in status bar. minimal: 'L 2 ▶', balanced: 'Lvl: 2 ▶', nature: '🌱 2 ▶'"
         }
       }
     },
@@ -290,6 +300,7 @@
     "test:integration": "node ./dist/test/runTest.js",
     "test:cov": "vitest run --coverage",
     "pretest": "npm run compile",
+    "publish": "vsce publish",
     "dev:install": "powershell -NoProfile -Command \"$ver = (Get-Content package.json | ConvertFrom-Json).version; npm run package; if ($LASTEXITCODE -eq 0) { code --install-extension ./breath-master-$ver.vsix }\"",
     "package": "npm run compile && npx @vscode/vsce package"
   },

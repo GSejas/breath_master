@@ -14,6 +14,7 @@ let engine: BreatheEngine;
 let statusBarItem: vscode.StatusBarItem;
 let statusBarItemRight: vscode.StatusBarItem;
 let statusBarItemGamification: vscode.StatusBarItem;
+let statusBarItemSquare: vscode.StatusBarItem;
 let animationTimer: any | undefined;
 let lastPhase: string = "";
 let meditationTracker: MeditationTracker;
@@ -151,10 +152,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Create gamification status bar item (if enabled)
   if (config.get<boolean>("enableGamification", true)) {
+    // Create square indicator (stops any active session/stretch)
+    statusBarItemSquare = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
+    statusBarItemSquare.command = "breathMaster.stopAny";
+    
+    // Create main gamification display (level + controls)
     statusBarItemGamification = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999);
-  statusBarItemGamification.command = "breathMaster.quickPledge";
-  updateGamificationDisplay();
-  statusBarItemGamification.show();
+    statusBarItemGamification.command = "breathMaster.universalControl";
+    updateGamificationDisplay();
+    statusBarItemGamification.show();
     // Set up hover tracking for meditation
     setupHoverTracking();
   }
@@ -435,6 +441,74 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
+  // Stop any active command: stops sessions or stretch presets
+  const stopAnyCommand = vscode.commands.registerCommand('breathMaster.stopAny', async () => {
+    const tracker = meditationTracker as MeditationTracker;
+    const activeSession = tracker.getActiveSession();
+    
+    if (activeSession) {
+      // End active session
+      vscode.commands.executeCommand('breathMaster.endSession');
+    } else if (activeStretchPreset) {
+      // Cancel stretch preset
+      vscode.commands.executeCommand('breathMaster.cancelStretchPreset');
+    } else {
+      // Nothing active, show info
+      vscode.window.showInformationMessage('No active session or stretch preset to stop.');
+    }
+  });
+
+  // Universal control command: handles start/stop/pause based on current state
+  const universalControlCommand = vscode.commands.registerCommand('breathMaster.universalControl', async () => {
+    const tracker = meditationTracker as MeditationTracker;
+    const activeSession = tracker.getActiveSession();
+    
+    // Priority 1: Handle active session controls
+    if (activeSession) {
+      if (activeSession.state === 'running') {
+        // Pause the running session
+        vscode.commands.executeCommand('breathMaster.pauseSession');
+        return;
+      } else if (activeSession.state === 'paused') {
+        // Resume the paused session
+        vscode.commands.executeCommand('breathMaster.resumeSession');
+        return;
+      }
+    }
+    
+    // Priority 2: Handle active stretch preset
+    if (activeStretchPreset) {
+      // Stop the stretch preset
+      vscode.commands.executeCommand('breathMaster.cancelStretchPreset');
+      return;
+    }
+    
+    // Priority 3: Start new session or show options
+    const options = [
+      { label: '🧘 Start Meditation Session', action: 'session' },
+      { label: '🧘 Start Stretch Preset', action: 'stretch' },
+      { label: '🎯 Make Pledge & Start', action: 'pledge' }
+    ];
+    
+    const pick = await vscode.window.showQuickPick(options, { 
+      placeHolder: 'Choose what to start' 
+    });
+    
+    if (pick) {
+      switch (pick.action) {
+        case 'session':
+          vscode.commands.executeCommand('breathMaster.startSession');
+          break;
+        case 'stretch':
+          vscode.commands.executeCommand('breathMaster.startStretchPreset');
+          break;
+        case 'pledge':
+          vscode.commands.executeCommand('breathMaster.makePledge');
+          break;
+      }
+    }
+  });
+
   // Quick pledge command: open pledge selection (or session controls if running)
   const quickPledgeCommand = vscode.commands.registerCommand('breathMaster.quickPledge', async () => {
     const tracker = meditationTracker as MeditationTracker;
@@ -583,6 +657,7 @@ export function activate(context: vscode.ExtensionContext): void {
     statusBarItem, 
     statusBarItemRight, 
     statusBarItemGamification,
+    statusBarItemSquare,
     toggleCommand, 
     cycleCommand, 
     meditateCommand,
@@ -598,8 +673,10 @@ export function activate(context: vscode.ExtensionContext): void {
     changeGoalCommand,
     makePledgeCommand,
     cancelPledgeCommand,
-  quickSessionActionCommand,
-  leaderboardCommand
+    stopAnyCommand,
+    universalControlCommand,
+    quickSessionActionCommand,
+    leaderboardCommand
   , vscode.commands.registerCommand('breathMaster.showJourneyCoverage', () => {
       try {
         const summary = journeyCoverage.getCoverageSummary();
@@ -812,29 +889,67 @@ function updateGamificationDisplay(): void {
   
   const gamificationData = meditationTracker.getGamificationDisplay();
   const stats = meditationTracker.getStats();
+  const level = meditationTracker.getCurrentLevel();
+  const activeSession = meditationTracker.getActiveSession();
+  const pledge = (meditationTracker as any).getActivePledge?.();
   
+  // Get gamification commitment level
+  const commitmentLevel = config.get<string>("gamificationCommitment", "balanced");
+  
+  // Create compact level display with configurable styling
   let text = "";
   if (showXP) {
-    const level = meditationTracker.getCurrentLevel();
-    text += `${level.icon} ${level.title}`;
+    // Use leaf icon or minimal display based on commitment level
+    const levelPrefix = commitmentLevel === "minimal" ? "L" : 
+                       commitmentLevel === "nature" ? "🌱" : "Lvl:";
+    text += `${levelPrefix} ${level.level}`;
   }
-  if (showStreak && stats.currentStreak > 0) {
-    const streakIcon = meditationTracker.getStreakIcon();
-    text += text ? ` • ${streakIcon} ${stats.currentStreak}d` : `${streakIcon} ${stats.currentStreak}d`;
+  
+  // Update separate square indicator (separate status bar item)
+  if (statusBarItemSquare) {
+    if (activeStretchPreset || activeSession || pledge) {
+      statusBarItemSquare.text = "⏹";
+      statusBarItemSquare.tooltip = "Click to stop active session/stretch";
+      statusBarItemSquare.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+      statusBarItemSquare.show();
+    } else {
+      statusBarItemSquare.hide();
+    }
   }
-  if (showSessionTimer && stats.todaySessionTime > 0) {
-    const todayTime = meditationTracker.formatSessionTime(stats.todaySessionTime);
-    text += text ? ` • ${todayTime}` : todayTime;
+  
+  // Add control button for main actions (no status indicator here)
+  let controlIcon = "";
+  if (activeSession) {
+    if (activeSession.state === 'running') {
+      controlIcon = "⏸"; // Pause button for running session
+    } else if (activeSession.state === 'paused') {
+      controlIcon = "▶"; // Play button for paused session
+    }
+  } else {
+    controlIcon = "▶"; // Start button when nothing is active
   }
-  const sessionText = meditationTracker.getSessionStatusBarText();
-  statusBarItemGamification.text = (text ? text + ' • ' : '') + sessionText;
+  
+  // Combine elements: Level + Control (no separate status indicator)
+  const parts = [];
+  if (text) parts.push(text);
+  if (controlIcon) parts.push(controlIcon);
+  
+  statusBarItemGamification.text = parts.join(" ");
+  
+  // Set background color for status indicator
+  if (activeStretchPreset) {
+    statusBarItemGamification.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+  } else if (activeSession) {
+    statusBarItemGamification.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+  } else {
+    statusBarItemGamification.backgroundColor = undefined;
+  }
 
   // Build rich Markdown tooltip
   const md = new vscode.MarkdownString(undefined, true);
   md.isTrusted = false;
   md.appendMarkdown('**Breath Master**  \n');
   if (showXP) {
-    const level = meditationTracker.getCurrentLevel();
     const progress = meditationTracker.getProgressToNextLevel();
     const filled = Math.min(10, Math.max(0, Math.round(progress.percentage / 10)));
     const bar = '▰'.repeat(filled) + '▱'.repeat(10 - filled);
@@ -846,11 +961,8 @@ function updateGamificationDisplay(): void {
   if (stats.todaySessionTime > 0) {
     md.appendMarkdown(`Today: **${meditationTracker.formatSessionTime(stats.todaySessionTime)}**  \n`);
   }
-  const pledge = (meditationTracker as any).getActivePledge?.();
   if (pledge) {
     md.appendMarkdown(`Pledge: **${pledge.goalMinutes}m x${pledge.multiplier}**${pledge.cancelled ? ' (cancelled)' : ''}  \n`);
-  } else {
-    md.appendMarkdown(`No active pledge  \n`);
   }
   
   // Show challenge count
@@ -862,6 +974,7 @@ function updateGamificationDisplay(): void {
   } else if (completedCount > 0) {
     md.appendMarkdown(`🌳 ${completedCount}/${totalChallenges.length} challenges completed today  \n`);
   }
+  
   // Stretch preset status
   if (activeStretchPreset) {
     const elapsed = Date.now() - activeStretchPreset.startedAt;
@@ -878,24 +991,26 @@ function updateGamificationDisplay(): void {
     } else {
       md.appendMarkdown(`🧘 Stretch: **${activeStretchPreset.preset.title}** (completed)  \n`);
     }
-    md.appendMarkdown(`*Run 'Cancel Stretch Preset' to stop*  \n`);
   }
   
-  md.appendMarkdown(`Session: ${sessionText}  \n`);
-  const active = meditationTracker.getActiveSession();
-  if (active) {
-    md.appendMarkdown(`*Click for controls & pledge*`);
+  // Session status
+  if (activeSession) {
+    const sessionText = meditationTracker.getSessionStatusBarText();
+    md.appendMarkdown(`Session: ${sessionText}  \n`);
+    
+    // Control instructions
+    if (activeSession.state === 'running') {
+      md.appendMarkdown(`*Click ${controlIcon} to pause or access controls*  \n`);
+    } else if (activeSession.state === 'paused') {
+      md.appendMarkdown(`*Click ${controlIcon} to resume or access controls*  \n`);
+    }
+  } else if (activeStretchPreset) {
+    md.appendMarkdown(`*Click ${controlIcon} to stop stretch preset*  \n`);
   } else {
-    md.appendMarkdown(`*Click to pledge & start*`);
+    md.appendMarkdown(`*Click ${controlIcon} to start session or stretch*  \n`);
   }
+  
   statusBarItemGamification.tooltip = md;
-
-  // Background color highlight when pledge active & session running
-  if (active && pledge && !pledge.cancelled) {
-    try { statusBarItemGamification.backgroundColor = new vscode.ThemeColor('breathMaster.pledgeBackground'); } catch {}
-  } else {
-    statusBarItemGamification.backgroundColor = undefined;
-  }
 }
 
 function setupHoverTracking(): void {

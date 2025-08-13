@@ -21,6 +21,32 @@ All notable changes to the Breath Master extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-08-12
+
+### 🔧 Fixed
+- Fixed animation GIFs in README to display correct versions
+- Updated documentation links and references
+
+### 📚 Documentation
+- Improved README with correct animated demonstrations
+- Updated installation instructions
+- Enhanced visual documentation
+
+## [0.3.0] - 2025-08-12
+
+### 🚀 Major Release - Complete Rebranding to Breath Master
+
+#### ✨ Added
+- Complete rebranding from BreatheGlow to Breath Master
+- Enhanced onboarding experience with tutorial system
+- Improved user interface and visual design
+- Updated installation files and documentation
+
+#### 🔧 Changed
+- Extension name changed to "Breath Master"
+- Updated icon and branding elements
+- Modernized user experience flows
+
 ## [0.1.0] - 2025-08-11
 
 ### 🚀 Major Release - Complete Rebranding & Ethical Gamification

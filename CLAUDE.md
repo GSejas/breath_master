@@ -59,9 +59,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Status Bar Interface
 - Left item: breathing phase indicator with animation
-- Right cluster: level, streak, today's time, session state
-- Compact mode for stretch presets
-- Tooltip shows detailed progress information
+- Right cluster: dual-button design with configurable styling
+  - Separate stop indicator (⏹) - appears only when sessions/stretch active, always stops
+  - Level display with configurable commitment level styling
+  - Universal control button (▶/⏸) - context-aware start/pause/resume
+- Background color coding for active states (warning/error themes)
+- Rich markdown tooltips with progress information
 
 ## Configuration Schema
 
@@ -71,6 +74,7 @@ Key settings in `contributes.configuration`:
 - `breathMaster.enableGamification` - Opt-in meditation tracking
 - `breathMaster.intensity` - Visual animation intensity (0-1)
 - `breathMaster.dataPrivacy` - Privacy control (local-only/export-allowed)
+- `breathMaster.gamificationCommitment` - Status bar styling level (minimal/balanced/nature)
 
 ## Data Export Format
 ```json
@@ -106,6 +110,8 @@ Manual QA focus areas (see TESTING.md):
 - Ethical design principles: no manipulation, user control, local-first privacy
 - Extension activates `onStartupFinished` for minimal performance impact
 - Stretch presets use timer-based notifications with parsing for compact display
+- Dual status bar items: separate stop indicator (statusBarItemSquare) + main display (statusBarItemGamification)
+- Universal control system with context-aware actions and configurable commitment levels
 
 ## Common Patterns
 
@@ -122,3 +128,9 @@ Manual QA focus areas (see TESTING.md):
 - All progression logic in `gamification.ts`
 - Challenge definitions in `DAILY_CHALLENGES` array
 - Level definitions in `LEVELS` array with XP thresholds
+
+### Status Bar Control Architecture
+- `statusBarItemSquare` - Stop indicator (⏹), only visible when active, command: `breathMaster.stopAny`
+- `statusBarItemGamification` - Main display with level + control, command: `breathMaster.universalControl`
+- Commitment levels affect display: minimal ("L 2"), balanced ("Lvl: 2"), nature ("🌱 2")
+- Background colors: warning (stretch presets), error (sessions), default (idle)
