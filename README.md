@@ -1,5 +1,9 @@
 ## Breath Master
 
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/GSejas.breath-master)](https://marketplace.visualstudio.com/items?itemName=GSejas.breath-master)
+[![VS Code Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/GSejas.breath-master)](https://marketplace.visualstudio.com/items?itemName=GSejas.breath-master)
+[![GitHub Stars](https://img.shields.io/github/stars/GSejas/breath_master)](https://github.com/GSejas/breath_master)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Documentation](https://img.shields.io/badge/docs-comprehensive-blue)](./docs/DOCUMENTATION-OVERVIEW.md)
 
 ## Mindful Coding Adventure
