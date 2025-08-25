@@ -7,6 +7,8 @@ export interface OnboardingState {
   hasSeenTour: boolean;
   tourCompletedAt?: string;
   gamificationOptIn: boolean;
+  gamificationDeclined?: boolean; // Track if user said "no" to avoid re-asking
+  progressiveDiscovery?: boolean; // Track if user chose "Maybe Later" for future offers
   lastEngagementMessage?: string;
   engagementCount: number;
   lastActiveDate: string;
@@ -71,6 +73,16 @@ const ENGAGEMENT_MESSAGES: EngagementMessage[] = [
     icon: '🌱',
     priority: 2,
     cooldownDays: 1
+  },
+  {
+    id: 'progressive-discovery',
+    type: 'gentle-reminder',
+    title: '🌱 Building a Nice Rhythm',
+    message: 'You\'ve been breathing mindfully! Want to discover progress tracking, daily challenges, and level progression?',
+    icon: '🎮',
+    priority: 2,
+    cooldownDays: 2,
+    conditions: { minXP: 25 } // After a few sessions
   },
   {
     id: 'first-streak',
@@ -139,6 +151,8 @@ export class OnboardingManager {
       if (stored) {
         return {
           ...stored,
+          gamificationDeclined: stored.gamificationDeclined || false,
+          progressiveDiscovery: stored.progressiveDiscovery || false,
           tutorialProgress: stored.tutorialProgress || {
             currentStep: 0,
             completedSteps: []
@@ -156,6 +170,8 @@ export class OnboardingManager {
     return {
       hasSeenTour: false,
       gamificationOptIn: false,
+      gamificationDeclined: false,
+      progressiveDiscovery: false,
       engagementCount: 0,
       lastActiveDate: new Date().toDateString(),
       tutorialProgress: {
@@ -209,6 +225,20 @@ export class OnboardingManager {
 
     // Find appropriate message
     const availableMessages = ENGAGEMENT_MESSAGES.filter(msg => {
+      // Special filtering for progressive discovery
+      if (msg.id === 'progressive-discovery') {
+        // Only show if user chose "Maybe Later" and hasn't declined gamification
+        if (!this.shouldOfferProgressiveDiscovery()) {
+          return false;
+        }
+      }
+      
+      // Don't show gamification messages if user declined
+      if ((msg.id === 'gamification-invite' || msg.id === 'progressive-discovery') && 
+          this.state.gamificationDeclined) {
+        return false;
+      }
+
       // Check cooldown
       if (this.state.lastEngagementMessage && daysSinceLastMessage < msg.cooldownDays) {
         return false;
@@ -537,5 +567,27 @@ export class OnboardingManager {
         action: 'Begin Coding Mindfully'
       }
     ];
+  }
+
+  // Progressive discovery methods
+  markProgressiveDiscovery(): void {
+    this.state.progressiveDiscovery = true;
+    this.saveState();
+  }
+
+  markGamificationDeclined(): void {
+    this.state.gamificationDeclined = true;
+    this.saveState();
+  }
+
+  shouldOfferProgressiveDiscovery(): boolean {
+    return (this.state.progressiveDiscovery ?? false) && 
+           !this.state.gamificationOptIn && 
+           !(this.state.gamificationDeclined ?? false);
+  }
+
+  isEligibleForGamificationOffer(): boolean {
+    // Don't offer if they've already opted in or explicitly declined
+    return !this.state.gamificationOptIn && !(this.state.gamificationDeclined ?? false);
   }
 }

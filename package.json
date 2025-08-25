@@ -201,6 +201,44 @@
           ],
           "default": "balanced",
           "description": "Level of gamification elements in status bar. minimal: 'L 2 ▶', balanced: 'Lvl: 2 ▶', nature: '🌱 2 ▶'"
+        },
+        "breathMaster.animation.preset": {
+          "type": "string",
+          "enum": [
+            "default",
+            "minimal",
+            "nature",
+            "custom"
+          ],
+          "default": "default",
+          "description": "Animation figure preset: default (circles), minimal (dots/lines), nature (organic symbols), custom (user-defined)"
+        },
+        "breathMaster.animation.figures": {
+          "type": "object",
+          "properties": {
+            "inhale": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "VS Code icons for inhale phase (3-5 icons from small to large amplitude)"
+            },
+            "hold1": {
+              "type": "array", 
+              "items": { "type": "string" },
+              "description": "VS Code icons for first hold phase"
+            },
+            "exhale": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "VS Code icons for exhale phase (3-5 icons from large to small amplitude)"
+            },
+            "hold2": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "VS Code icons for second hold phase"
+            }
+          },
+          "default": {},
+          "description": "Custom animation figures for each breathing phase (requires preset: 'custom')"
         }
       }
     },

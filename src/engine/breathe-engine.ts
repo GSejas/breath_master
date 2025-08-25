@@ -5,6 +5,8 @@
  */
 
 export type Pattern = "chill" | "medium" | "active" | "boxing" | "relaxing" | "custom";
+export type AnimationPreset = "default" | "minimal" | "nature" | "custom";
+export type BreathingPhase = "inhale" | "hold1" | "exhale" | "hold2";
 
 interface PhaseDurations {
   inhale: number;
@@ -13,12 +15,49 @@ interface PhaseDurations {
   hold2: number;
 }
 
+interface AnimationFigures {
+  inhale: string[];
+  hold1: string[];
+  exhale: string[];
+  hold2: string[];
+}
+
 const PATTERNS: Record<Exclude<Pattern, "custom">, PhaseDurations> = {
   chill:      { inhale: 6000, hold1: 0,    exhale: 8000, hold2: 0    }, // Slow and easy
   medium:     { inhale: 5000, hold1: 0,    exhale: 5000, hold2: 0    }, // Coherence breathing
   active:     { inhale: 4000, hold1: 2000, exhale: 4000, hold2: 1000 }, // Energizing
   boxing:     { inhale: 4000, hold1: 4000, exhale: 4000, hold2: 4000 }, // Box breathing (tactical)
   relaxing:   { inhale: 4000, hold1: 7000, exhale: 8000, hold2: 0    }  // 4-7-8 technique
+};
+
+const DEFAULT_FIGURES: AnimationFigures = {
+  inhale: ["$(circle-small-filled)", "$(circle-filled)", "$(record)"],
+  hold1: ["$(record)", "$(record)", "$(record)"],
+  // small -> large for every phase to keep amplitude mapping consistent
+  exhale: ["$(circle-small-filled)", "$(circle-filled)", "$(record)"],
+  hold2: ["$(circle-small-filled)", "$(circle-small-filled)", "$(circle-small-filled)"]
+};
+
+const MINIMAL_FIGURES: AnimationFigures = {
+  inhale: ["$(dot-fill)", "$(circle-outline)", "$(circle-filled)"],
+  hold1: ["$(circle-filled)", "$(circle-filled)", "$(circle-filled)"],
+  // normalized to small -> large (fixed order)
+  exhale: ["$(dot-fill)", "$(circle-outline)", "$(circle-filled)"],
+  hold2: ["$(dot-fill)", "$(dot-fill)", "$(dot-fill)"]
+};
+
+const NATURE_FIGURES: AnimationFigures = {
+  inhale: ["$(seed)", "$(tree)", "$(globe)"],
+  hold1: ["$(globe)", "$(globe)", "$(globe)"],
+  // small -> large mapping for exhale as well
+  exhale: ["$(seed)", "$(tree)", "$(globe)"],
+  hold2: ["$(seed)", "$(seed)", "$(seed)"]
+};
+
+const PRESET_FIGURES: Record<Exclude<AnimationPreset, "custom">, AnimationFigures> = {
+  default: DEFAULT_FIGURES,
+  minimal: MINIMAL_FIGURES,
+  nature: NATURE_FIGURES
 };
 
 /**
@@ -141,4 +180,73 @@ export class BreatheEngine {
       remainingSeconds: Math.ceil((this.totalDuration - elapsed) / 1000)
     };
   }
+
+  /**
+   * Returns the detailed current breathing phase for animation purposes
+   */
+  getDetailedPhase(): { phase: BreathingPhase; remainingSeconds: number } {
+    const elapsed = (Date.now() - this.startTime) % this.totalDuration;
+    const { inhale, hold1, exhale, hold2 } = this.durations;
+
+    if (elapsed < inhale) {
+      return {
+        phase: "inhale",
+        remainingSeconds: Math.ceil((inhale - elapsed) / 1000)
+      };
+    }
+
+    if (elapsed < inhale + hold1) {
+      return {
+        phase: "hold1",
+        remainingSeconds: Math.ceil((inhale + hold1 - elapsed) / 1000)
+      };
+    }
+
+    const exhaleStart = inhale + hold1;
+    if (elapsed < exhaleStart + exhale) {
+      return {
+        phase: "exhale",
+        remainingSeconds: Math.ceil((exhaleStart + exhale - elapsed) / 1000)
+      };
+    }
+
+    // Hold2 phase
+    return {
+      phase: "hold2",
+      remainingSeconds: Math.ceil((this.totalDuration - elapsed) / 1000)
+    };
+  }
+
+  /**
+   * Get animation figure for current phase and amplitude
+   */
+  static getAnimationFigure(
+    phase: BreathingPhase, 
+    amplitude: number, 
+    preset: AnimationPreset = "default",
+    customFigures?: AnimationFigures
+  ): string {
+    let figures: AnimationFigures;
+    
+    if (preset === "custom" && customFigures) {
+      figures = customFigures;
+    } else if (preset !== "custom") {
+      figures = PRESET_FIGURES[preset];
+    } else {
+      figures = DEFAULT_FIGURES; // fallback
+    }
+
+    const phaseFigures = figures[phase];
+    if (!phaseFigures || phaseFigures.length === 0) {
+      return "$(pulse)"; // fallback icon
+    }
+
+    // Map amplitude to figure index
+    const index = Math.floor(amplitude * phaseFigures.length);
+    const clampedIndex = Math.min(index, phaseFigures.length - 1);
+    
+    return phaseFigures[clampedIndex];
+  }
 }
+
+export { PRESET_FIGURES, DEFAULT_FIGURES, MINIMAL_FIGURES, NATURE_FIGURES };

@@ -4,7 +4,7 @@
  */
 
 import * as vscode from "vscode";
-import { BreatheEngine, Pattern } from "../engine/breathe-engine";
+import { BreatheEngine, Pattern, AnimationPreset, BreathingPhase } from "../engine/breathe-engine";
 import { MeditationTracker } from "../engine/gamification";
 import { OnboardingManager } from "../engine/onboarding";
 import { TutorialService } from "../engine/tutorial-service";
@@ -49,6 +49,31 @@ function parseStretchLabel(label: string): ParsedStretchStep {
     duration = durMatch[1];
   }
   return { raw: label, action: rest, duration, quote, icon };
+}
+
+// Normalize and validate custom animation figures
+function normalizeFigures(
+  preset: AnimationPreset,
+  custom?: Partial<Record<"inhale"|"hold1"|"exhale"|"hold2", string[]>>
+): Record<"inhale"|"hold1"|"exhale"|"hold2", string[]> {
+  // Use engine defaults by importing PRESET_FIGURES would be ideal,
+  // but keep a conservative fallback here to avoid circular imports.
+  const base = {
+    inhale: ["$(circle-small-filled)", "$(circle-filled)", "$(record)"],
+    hold1: ["$(record)", "$(record)", "$(record)"],
+    exhale: ["$(circle-small-filled)", "$(circle-filled)", "$(record)"],
+    hold2: ["$(circle-small-filled)", "$(circle-small-filled)", "$(circle-small-filled)"]
+  };
+
+  if (preset !== "custom" || !custom) return base;
+
+  const fill = (arr?: string[]) => (Array.isArray(arr) && arr.length >= 2 ? arr : base.inhale);
+  return {
+    inhale: fill(custom.inhale),
+    hold1: fill(custom.hold1),
+    exhale: fill(custom.exhale),
+    hold2: fill(custom.hold2)
+  };
 }
 const STRETCH_PRESETS: StretchPreset[] = [
   {
@@ -712,7 +737,7 @@ function startAnimation(): void {
   }
 
   const tickMs = config.get<number>("tickMs", 100);
-  const intensity = Math.min(config.get<number>("intensity", 0.6), 1.0) * 0.49; // Cap at 0.49 as requested
+  const intensity = config.get<number>("intensity", 0.6); // Remove aggressive scaling
   const showBoth = config.get<boolean>("showBoth", true);
   const showNotifications = config.get<boolean>("showNotifications", false);
 
@@ -727,22 +752,30 @@ function startAnimation(): void {
     clearInterval(animationTimer);
   }
 
+  // Prepare normalized figures (validate once per animation start)
+  const animationPreset = config.get<AnimationPreset>("animation.preset", "default");
+  const customFiguresRaw = config.get<any>("animation.figures", {});
+  const figures = normalizeFigures(animationPreset, customFiguresRaw);
+
+  // simple smoothing state to reduce index churn
+  let smoothedAmp = 0;
+  const alpha = 0.15; // smoothing factor: lower = heavier smoothing
+
   animationTimer = setInterval(() => {
     const amplitude = engine.getAmplitude();
-    const scaledAmplitude = amplitude * intensity;
+    // Apply smoothing to raw amplitude first, then scale
+    smoothedAmp = (1 - alpha) * smoothedAmp + alpha * amplitude;
+    const scaledAmplitude = smoothedAmp * intensity;
     const { phase, remainingSeconds } = engine.getCurrentPhase();
-    
-    // Create breathing effect by varying icon based on amplitude
-    let sizeIcon = "$(pulse)";
-    if (scaledAmplitude < 0.2) {
-      sizeIcon = "$(circle-small-filled)";
-    } else if (scaledAmplitude < 0.5) {
-      sizeIcon = "$(circle-filled)";
-    } else if (scaledAmplitude < 0.8) {
-      sizeIcon = "$(circle-large-filled)";
-    } else {
-      sizeIcon = "$(record)"; // Largest circle
-    }
+    const detailedPhase = engine.getDetailedPhase();
+
+    // Get animation figure based on current phase and smoothed amplitude
+    const sizeIcon = BreatheEngine.getAnimationFigure(
+      detailedPhase.phase,
+      scaledAmplitude,
+      animationPreset,
+      figures
+    );
 
     // Add directional phase icons for visual breathing cues
     let phaseIcon = "$(pulse)";
@@ -1113,30 +1146,138 @@ async function toggleMeditation(): Promise<void> {
 }
 
 async function showTour(): Promise<void> {
-  // Enhanced tutorial experience - Cathedral of Code journey
+  // "Breathe First" welcome flow - experience before explanation
+  await showBreathFirstWelcome();
+}
+
+async function showBreathFirstWelcome(): Promise<void> {
   try {
-    await tutorialService.startTutorial();
-  } catch (error) {
-    console.error('Tutorial failed to start:', error);
-    
-    // Fallback to simple welcome
-    const picked = await vscode.window.showInformationMessage(
-      '🫁 Welcome to Breath Master — cultivate a calm, continuous flow while you code.',
-      'Enable Breath Master Mode', // enable gamification/tracking
-      'Skip'
+    // Step 1: Immediate micro-experience
+    const takeBreath = await vscode.window.showInformationMessage(
+      '🫁 Take a breath with me...',
+      { modal: false },
+      'Breathe'
     );
 
-    if (picked === 'Enable Breath Master Mode') {
-      const config = vscode.workspace.getConfiguration('breathMaster');
-      await config.update('enableGamification', true, vscode.ConfigurationTarget.Global);
-      onboardingManager.markTourCompleted(true);
-      vscode.window.showInformationMessage('🌟 Breath Master mode enabled. Track mindful progress anytime.');
+    if (takeBreath === 'Breathe') {
+      // Start a 10-second breathing session
+      await startMicroBreathingSession();
+      
+      // Step 2: Gentle reveal what just happened
+      const learned = await vscode.window.showInformationMessage(
+        "🌿 That's what Breath Master does - gentle moments of calm while you code.",
+        'Discover More',
+        'Just Breathing',
+        'Maybe Later'
+      );
+
+      if (learned === 'Discover More') {
+        // Step 3: Show full tutorial for interested users
+        try {
+          await tutorialService.startTutorial();
+        } catch (error) {
+          console.error('Tutorial failed to start:', error);
+          await showGameModeOffer();
+        }
+      } else if (learned === 'Just Breathing') {
+        // Keep it simple - mark as declined to avoid future offers
+        onboardingManager.markTourCompleted(false);
+        onboardingManager.markGamificationDeclined();
+        vscode.window.showInformationMessage('✨ Perfect! Breath Master will be your quiet coding companion.');
+      } else {
+        // Maybe Later - set a flag for progressive disclosure
+        onboardingManager.markTourCompleted(false);
+        scheduleProgressiveDisclosure();
+      }
     } else {
-      // Mark seen so we do not re-prompt every startup
-      onboardingManager.markTourCompleted(false);
-      vscode.window.showInformationMessage('✨ You can enable Breath Master mode later from settings.');
+      // User didn't engage - fallback to simple offer
+      await showSimpleFallback();
     }
+  } catch (error) {
+    console.error('Breathe First welcome failed:', error);
+    await showSimpleFallback();
   }
+}
+
+async function startMicroBreathingSession(): Promise<void> {
+  // Ensure breathing is enabled and start a short session
+  const config = vscode.workspace.getConfiguration("breathMaster");
+  const wasEnabled = config.get<boolean>("enabled", true);
+  
+  if (!wasEnabled) {
+    await config.update('enabled', true, vscode.ConfigurationTarget.Global);
+  }
+
+  // Show status message during the micro session
+  vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "🌊 Breathing with you...",
+    cancellable: false
+  }, async (progress) => {
+    // 10-second breathing experience
+    for (let i = 0; i <= 10; i++) {
+      progress.report({ increment: 10, message: `${i}/10 seconds` });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  });
+
+  // Restore original setting if it was disabled
+  if (!wasEnabled) {
+    await config.update('enabled', wasEnabled, vscode.ConfigurationTarget.Global);
+  }
+}
+
+async function showGameModeOffer(): Promise<void> {
+  const gameModeChoice = await vscode.window.showInformationMessage(
+    '🎮 Want to discover progress tracking, daily challenges, and mindful level progression?',
+    'Enable Game Mode',
+    'Keep It Simple'
+  );
+
+  const config = vscode.workspace.getConfiguration('breathMaster');
+  
+  if (gameModeChoice === 'Enable Game Mode') {
+    await config.update('enableGamification', true, vscode.ConfigurationTarget.Global);
+    onboardingManager.markTourCompleted(true);
+    vscode.window.showInformationMessage('🌟 Game Mode enabled! Track your mindful coding journey.');
+  } else {
+    onboardingManager.markTourCompleted(false);
+    onboardingManager.markGamificationDeclined();
+    vscode.window.showInformationMessage('✨ Perfect! Breath Master will stay minimal and focused.');
+  }
+}
+
+async function showSimpleFallback(): Promise<void> {
+  const picked = await vscode.window.showInformationMessage(
+    '🫁 Welcome to Breath Master — your mindful coding companion.',
+    'Enable Game Mode',
+    'Keep Simple'
+  );
+
+  const config = vscode.workspace.getConfiguration('breathMaster');
+  
+  if (picked === 'Enable Game Mode') {
+    await config.update('enableGamification', true, vscode.ConfigurationTarget.Global);
+    onboardingManager.markTourCompleted(true);
+    vscode.window.showInformationMessage('🌟 Game Mode enabled! Discover challenges and progress tracking.');
+  } else {
+    onboardingManager.markTourCompleted(false);
+    onboardingManager.markGamificationDeclined();
+    vscode.window.showInformationMessage('✨ You can enable Game Mode anytime from settings.');
+  }
+}
+
+function scheduleProgressiveDisclosure(): void {
+  // Mark user for progressive discovery - they'll get gamification offers after using the app
+  onboardingManager.markProgressiveDiscovery();
+  
+  const state = onboardingManager.getState();
+  if (!state.userPreferences) {
+    onboardingManager.updatePreferences({ messageFrequency: 'subtle' });
+  }
+  
+  // The existing engagement system will handle showing progressive discovery messages later
+  vscode.window.showInformationMessage('✨ Breath Master is ready when you are. Find it in your status bar.');
 }
 
 async function exportData(): Promise<void> {
