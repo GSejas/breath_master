@@ -21,6 +21,25 @@ All notable changes to the Breath Master extension will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2025-08-25
+
+### 🔧 Fixed
+- **Animation Smoothness**: Fixed breathing animation to properly grow and shrink with breathing phases
+  - Corrected exhale figure arrays to maintain consistent small→large ordering across all presets
+  - Removed overly aggressive intensity scaling that limited animation to 30% of range
+  - Reordered smoothing to apply before intensity scaling, preserving full amplitude range
+  - Fixed MINIMAL_FIGURES exhale array direction for consistent visual progression
+- **Visual Breathing Flow**: Animation now properly shows:
+  - Inhale: smooth growth from small → medium → large icons
+  - Hold1: maintains large size consistently  
+  - Exhale: smooth shrinkage from large → medium → small icons
+  - Hold2: maintains small size consistently
+
+### 🚀 Enhanced
+- **Custom Animation Figures**: Added normalization and validation for user-defined animation figures
+- **Reduced Flicker**: Implemented low-pass smoothing to reduce jarring transitions between icon indices
+- **Performance**: Optimized figure validation to occur once per animation start rather than per frame
+
 ## [0.3.1] - 2025-08-12
 
 ### 🔧 Fixed
