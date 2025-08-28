@@ -47,3 +47,6 @@ Thumbs.db
 # Temp files
 *.tmp
 *.temp
+
+# Health monitoring files
+.vscode/healthwatch/
