@@ -31,17 +31,16 @@ suite('Breath Master Extension Integration Tests', () => {
       commands.includes('breathMaster.cyclePattern'),
       'breathMaster.cyclePattern command should be registered'
     );
-  });
 
-  test('Configuration should have default values', () => {
-    const config = vscode.workspace.getConfiguration();
-    
-    assert.strictEqual(config.get('breathMaster.enabled'), true, 'Default enabled should be true');
-    assert.strictEqual(config.get('breathMaster.pattern'), 'chill', 'Default pattern should be chill');
-    assert.strictEqual(config.get('breathMaster.intensity'), 0.6, 'Default intensity should be 0.6');
-    assert.strictEqual(config.get('breathMaster.tickMs'), 100, 'Default tickMs should be 100');
-    assert.strictEqual(config.get('breathMaster.showBoth'), true, 'Default showBoth should be true');
-    assert.strictEqual(config.get('breathMaster.showNotifications'), false, 'Default showNotifications should be false');
+    assert.ok(
+      commands.includes('breathMaster.startSession'),
+      'breathMaster.startSession command should be registered'
+    );
+
+    assert.ok(
+      commands.includes('breathMaster.endSession'),
+      'breathMaster.endSession command should be registered'
+    );
   });
 
   test('Toggle command should execute without error', async () => {
@@ -64,31 +63,11 @@ suite('Breath Master Extension Integration Tests', () => {
     }
   });
 
-  test('Configuration changes should be respected', async () => {
-    const config = vscode.workspace.getConfiguration();
-    
-    // Test that configuration updates don't throw errors
+  test('Pattern cycling should work through all patterns', async () => {
+    // Test that cycle commands execute without errors through all patterns
     try {
-      await config.update('breathMaster.pattern', 'boxing', vscode.ConfigurationTarget.Global);
-      await config.update('breathMaster.intensity', 0.8, vscode.ConfigurationTarget.Global);
-      assert.ok(true, 'Configuration updates completed without errors');
-    } catch (error) {
-      assert.fail(`Configuration update failed: ${error}`);
-    }
-    
-    // Reset to defaults
-    await config.update('breathMaster.pattern', 'chill', vscode.ConfigurationTarget.Global);
-    await config.update('breathMaster.intensity', 0.6, vscode.ConfigurationTarget.Global);
-  });
-
-  test('Pattern cycling should work correctly', async () => {
-    const config = vscode.workspace.getConfiguration();
-    
-    // Set to known starting pattern
-    await config.update('breathMaster.pattern', 'chill', vscode.ConfigurationTarget.Global);
-    
-    // Test that cycle commands execute without errors
-    try {
+      // Start from any pattern and cycle through all 6 patterns (chill, medium, active, boxing, relaxing, custom)
+      await vscode.commands.executeCommand('breathMaster.cyclePattern');
       await vscode.commands.executeCommand('breathMaster.cyclePattern');
       await vscode.commands.executeCommand('breathMaster.cyclePattern');
       await vscode.commands.executeCommand('breathMaster.cyclePattern');
@@ -100,35 +79,77 @@ suite('Breath Master Extension Integration Tests', () => {
     }
   });
 
-  test('Extension should handle invalid configuration gracefully', async () => {
-    const config = vscode.workspace.getConfiguration();
-    
-    // Test invalid pattern (should not crash)
+  test('Session commands should execute without hanging', async () => {
+    // Note: startSession shows a QuickPick which hangs in automated tests
+    // Instead, test that the commands are registered and don't throw immediate errors
     try {
-      await config.update('breathMaster.pattern', 'invalid-pattern', vscode.ConfigurationTarget.Global);
-      await vscode.commands.executeCommand('breathMaster.toggle');
-      assert.ok(true, 'Extension handles invalid pattern gracefully');
+      // Just test that endSession exists and can be called (it doesn't show dialogs)
+      await vscode.commands.executeCommand('breathMaster.endSession');
+      assert.ok(true, 'End session command executed successfully');
     } catch (error) {
-      assert.fail(`Extension should handle invalid pattern: ${error}`);
+      assert.fail(`Session commands failed: ${error}`);
     }
-    
-    // Reset to valid pattern
-    await config.update('breathMaster.pattern', 'chill', vscode.ConfigurationTarget.Global);
   });
 
-  test('Extension should clean up properly on deactivate', async () => {
-    // This test ensures no memory leaks or hanging timers
-    // In a real scenario, we'd deactivate and check for cleanup
-    // For now, we just verify the extension can be safely toggled off
-    
-    const config = vscode.workspace.getConfiguration();
-    await config.update('breathMaster.enabled', false, vscode.ConfigurationTarget.Global);
-    
-    // Extension should still be responsive
-    await vscode.commands.executeCommand('breathMaster.toggle');
-    assert.ok(true, 'Extension handles disable/enable gracefully');
-    
-    // Reset
-    await config.update('breathMaster.enabled', true, vscode.ConfigurationTarget.Global);
+  test('Gamification commands should execute without hanging', async () => {
+    try {
+      // Note: viewChallenges may show dialogs, universalControl may show QuickPick
+      // Test a simpler command or just test registration
+      const commands = await vscode.commands.getCommands(true);
+      assert.ok(commands.includes('breathMaster.viewChallenges'), 'viewChallenges should be registered');
+      assert.ok(commands.includes('breathMaster.universalControl'), 'universalControl should be registered');
+      assert.ok(true, 'Gamification commands are properly registered');
+    } catch (error) {
+      assert.fail(`Gamification commands failed: ${error}`);
+    }
+  });
+
+  test('Export and data commands should be registered', async () => {
+    try {
+      // Note: exportData shows dialogs which hang in automated tests
+      // Just verify the commands exist
+      const commands = await vscode.commands.getCommands(true);
+      assert.ok(commands.includes('breathMaster.exportData'), 'exportData should be registered');
+      assert.ok(commands.includes('breathMaster.clearData'), 'clearData should be registered');
+      assert.ok(true, 'Data commands are properly registered');
+    } catch (error) {
+      assert.fail(`Export data command failed: ${error}`);
+    }
+  });
+
+  test('Extension should handle safe commands gracefully', async () => {
+    // Test commands that don't show dialogs to avoid hanging
+    try {
+      await vscode.commands.executeCommand('breathMaster.toggle');
+      await vscode.commands.executeCommand('breathMaster.cyclePattern');
+      // Skip startSession (shows QuickPick), pauseSession, resumeSession
+      await vscode.commands.executeCommand('breathMaster.endSession');
+      assert.ok(true, 'Safe commands executed successfully in sequence');
+    } catch (error) {
+      assert.fail(`Command sequence failed: ${error}`);
+    }
+  });
+
+  test('Stretch preset commands should be registered', async () => {
+    try {
+      // Note: startStretchPreset shows a QuickPick which hangs in automated tests
+      const commands = await vscode.commands.getCommands(true);
+      assert.ok(commands.includes('breathMaster.startStretchPreset'), 'startStretchPreset should be registered');
+      assert.ok(commands.includes('breathMaster.cancelStretchPreset'), 'cancelStretchPreset should be registered');
+      assert.ok(true, 'Stretch preset commands are properly registered');
+    } catch (error) {
+      assert.fail(`Stretch preset command failed: ${error}`);
+    }
+  });
+
+  test('Tutorial commands should be registered', async () => {
+    try {
+      // Note: showTour may show dialogs or webviews which hang in automated tests
+      const commands = await vscode.commands.getCommands(true);
+      assert.ok(commands.includes('breathMaster.showTour'), 'showTour should be registered');
+      assert.ok(true, 'Tutorial commands are properly registered');
+    } catch (error) {
+      assert.fail(`Tutorial command failed: ${error}`);
+    }
   });
 });

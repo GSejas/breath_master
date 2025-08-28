@@ -33,21 +33,25 @@ const PATTERNS: Record<Exclude<Pattern, "custom">, PhaseDurations> = {
 const DEFAULT_FIGURES: AnimationFigures = {
   inhale: ["$(circle-small-filled)", "$(circle-filled)", "$(record)"],
   hold1: ["$(record)", "$(record)", "$(record)"],
-  // large -> small for exhale (shrinking as amplitude decreases from 1 to 0)
-  exhale: ["$(record)", "$(circle-filled)", "$(circle-small-filled)"],
+  // Keep figures ordered small->large so amplitude mapping (0..1 -> index)
+  // is monotonic for both inhale and exhale phases.
+  exhale: ["$(circle-small-filled)", "$(circle-filled)", "$(record)"],
   hold2: ["$(circle-small-filled)", "$(circle-small-filled)", "$(circle-small-filled)"]
 };
 
 const MINIMAL_FIGURES: AnimationFigures = {
-  inhale: ["$(dot-fill)", "$(circle-outline)", "$(circle-filled)"],
+  // Use existing codicon names (small -> large) for minimal preset
+  inhale: ["$(circle-small-filled)", "$(circle)", "$(circle-filled)"],
   hold1: ["$(circle-filled)", "$(circle-filled)", "$(circle-filled)"],
-  // large -> small for exhale (shrinking as amplitude decreases from 1 to 0)
-  exhale: ["$(circle-filled)", "$(circle-outline)", "$(dot-fill)"],
-  hold2: ["$(dot-fill)", "$(dot-fill)", "$(dot-fill)"]
+  // Mirror inhale ordering (small->large) for consistent mapping.
+  exhale: ["$(circle-small-filled)", "$(circle)", "$(circle-filled)"],
+  hold2: ["$(circle-small-filled)", "$(circle-small-filled)", "$(circle-small-filled)"]
 };
+
 const NATURE_FIGURES: AnimationFigures = {
+  // Use emoji glyphs for organic preset (single code point each)
   inhale: ["🌱", "🌿", "🌳"],
-  hold1: ["🌳", "🌱","🌳","🌱", "🌳"],
+  hold1: ["🌳", "🌳", "🌳"],
   exhale: ["🌳", "🌿", "🌱"],
   hold2: ["🌱", "🌱", "🌱"]
 };
@@ -118,7 +122,11 @@ export class BreatheEngine {
    * within inhale/exhale phases, flat during hold phases.
    */
   getAmplitude(): number {
-    const elapsed = (Date.now() - this.startTime) % this.totalDuration;
+    // Protect against degenerate zero-duration patterns
+    const total = this.totalDuration;
+    if (total === 0) return 0;
+
+    const elapsed = (Date.now() - this.startTime) % total;
     const { inhale, hold1, exhale, hold2 } = this.durations;
 
     if (elapsed < inhale) {
@@ -147,7 +155,12 @@ export class BreatheEngine {
    * Returns the current breathing phase and remaining seconds
    */
   getCurrentPhase(): { phase: string; remainingSeconds: number } {
-    const elapsed = (Date.now() - this.startTime) % this.totalDuration;
+    const total = this.totalDuration;
+    if (total === 0) {
+      return { phase: "Hold", remainingSeconds: 0 };
+    }
+
+    const elapsed = (Date.now() - this.startTime) % total;
     const { inhale, hold1, exhale, hold2 } = this.durations;
 
     if (elapsed < inhale) {
@@ -183,7 +196,12 @@ export class BreatheEngine {
    * Returns the detailed current breathing phase for animation purposes
    */
   getDetailedPhase(): { phase: BreathingPhase; remainingSeconds: number } {
-    const elapsed = (Date.now() - this.startTime) % this.totalDuration;
+    const total = this.totalDuration;
+    if (total === 0) {
+      return { phase: "hold2", remainingSeconds: 0 };
+    }
+
+    const elapsed = (Date.now() - this.startTime) % total;
     const { inhale, hold1, exhale, hold2 } = this.durations;
 
     if (elapsed < inhale) {
@@ -216,6 +234,61 @@ export class BreatheEngine {
   }
 
   /**
+   * Deterministic sampler: compute amplitude for a given elapsed ms since phase start.
+   * Helpful for debugging / offline analysis where we don't rely on Date.now().
+   */
+  getAmplitudeAt(elapsedMs: number): number {
+    const total = this.totalDuration;
+    if (total === 0) return 0;
+
+    const elapsed = elapsedMs % total;
+    const { inhale, hold1, exhale, hold2 } = this.durations;
+
+    if (elapsed < inhale) {
+      const progress = elapsed / inhale;
+      return (1 - Math.cos(Math.PI * progress)) / 2;
+    }
+
+    if (elapsed < inhale + hold1) {
+      return 1;
+    }
+
+    const exhaleStart = inhale + hold1;
+    if (elapsed < exhaleStart + exhale) {
+      const progress = (elapsed - exhaleStart) / exhale;
+      return (1 + Math.cos(Math.PI * progress)) / 2;
+    }
+
+    return 0;
+  }
+
+  /**
+   * Deterministic phase inspector for a supplied elapsed ms (useful for reporting).
+   */
+  getDetailedPhaseAt(elapsedMs: number): { phase: BreathingPhase; remainingSeconds: number } {
+    const total = this.totalDuration;
+    if (total === 0) return { phase: 'hold2', remainingSeconds: 0 };
+
+    const elapsed = elapsedMs % total;
+    const { inhale, hold1, exhale, hold2 } = this.durations;
+
+    if (elapsed < inhale) {
+      return { phase: 'inhale', remainingSeconds: Math.ceil((inhale - elapsed) / 1000) };
+    }
+
+    if (elapsed < inhale + hold1) {
+      return { phase: 'hold1', remainingSeconds: Math.ceil((inhale + hold1 - elapsed) / 1000) };
+    }
+
+    const exhaleStart = inhale + hold1;
+    if (elapsed < exhaleStart + exhale) {
+      return { phase: 'exhale', remainingSeconds: Math.ceil((exhaleStart + exhale - elapsed) / 1000) };
+    }
+
+    return { phase: 'hold2', remainingSeconds: Math.ceil((this.totalDuration - elapsed) / 1000) };
+  }
+
+  /**
    * Get animation figure for current phase and amplitude
    */
   static getAnimationFigure(
@@ -224,19 +297,18 @@ export class BreatheEngine {
     preset: AnimationPreset = "default",
     customFigures?: AnimationFigures
   ): string {
-    // Defensive: preset may come from user settings and include unknown names.
-    // Resolve figures safely and fall back to defaults when missing.
-    let figures: AnimationFigures | undefined;
-
+    let figures: AnimationFigures;
+    
     if (preset === "custom" && customFigures) {
       figures = customFigures;
+    } else if (preset !== "custom") {
+      figures = PRESET_FIGURES[preset];
     } else {
-      const key = preset as keyof typeof PRESET_FIGURES;
-      figures = PRESET_FIGURES[key] ?? DEFAULT_FIGURES;
+      figures = DEFAULT_FIGURES; // fallback
     }
 
-    const phaseFigures = (figures as any)?.[phase] as string[] | undefined;
-    if (!Array.isArray(phaseFigures) || phaseFigures.length === 0) {
+    const phaseFigures = figures[phase];
+    if (!phaseFigures || phaseFigures.length === 0) {
       return "$(pulse)"; // fallback icon
     }
 

@@ -136,6 +136,151 @@ const ENGAGEMENT_MESSAGES: EngagementMessage[] = [
   }
 ];
 
+/**
+ * Manages onboarding and engagement state for the Breath Master extension.
+ *
+ * Responsibilities:
+ * - Load and persist onboarding state from either legacy VS Code storage or a "StorageWrapper" versioned storage.
+ * - Provide a single in-memory representation of onboarding state, with safe defaults and backward-compatible loading.
+ * - Offer API methods for driving the tutorial flow, engagement message selection and cooldowns, preference updates, and
+ *   progressive/gamification-related flags.
+ *
+ * Storage behavior:
+ * - The constructor accepts an optional storageKey (default: 'breathMaster.onboarding') and an optional storage object.
+ * - If the provided storage appears to be a StorageWrapper (detected by constructor name === 'StorageWrapper' and presence
+ *   of get/update functions), the manager will treat stored values as versioned payloads and call storage.update with an
+ *   optimistic update function. For legacy VS Code storage it will call storage.get/storage.update directly.
+ * - loadState merges persisted state with the current defaults to tolerate missing keys from older versions.
+ * - saveState wraps updates in try/catch and logs warnings on failure.
+ *
+ * Onboarding state (summary of relevant fields):
+ * - hasSeenTour: boolean — true once the user has completed or skipped the tour.
+ * - gamificationOptIn: boolean — true if the user opted into tracking/gamification.
+ * - gamificationDeclined: boolean — true if the user explicitly declined gamification.
+ * - progressiveDiscovery: boolean — flag set when the user selected a "Maybe Later" or triggered progressive offering.
+ * - engagementCount: number — how many engagement messages have been shown (used to compute backoff).
+ * - lastActiveDate: string — ISO/locale date string representing the last active day.
+ * - lastEngagementMessage: string | undefined — date string when last engagement message was shown.
+ * - tutorialProgress: { currentStep: number; completedSteps: string[]; startedAt?: string } — tutorial progress details.
+ * - userPreferences: { messageFrequency: 'active'|'moderate'|'subtle'|'off'; reminderStyle: string } — message/prompt preferences.
+ *
+ * Public API (high level):
+ *
+ * - constructor(storageKey?: string, storage?: any)
+ *   @param storageKey - optional key used to read/write onboarding state.
+ *   @param storage - optional storage implementation (legacy VS Code memento-like or StorageWrapper).
+ *
+ * - shouldShowTour(): boolean
+ *   Returns true if the initial tour/tutorial has not yet been seen.
+ *
+ * - reloadFromStorage(): void
+ *   Re-reads the persisted state and replaces the in-memory state (useful for cross-window sync).
+ *
+ * - markTourCompleted(optedInToGamification?: boolean): void
+ *   Marks the tour as seen/completed, records completion timestamp, sets gamification opt-in flag, and persists state.
+ *   @param optedInToGamification - whether the user accepted gamification when completing the tour (default false).
+ *
+ * - getNextEngagementMessage(stats: { currentStreak: number; totalXP: number; lastActiveDate: string }): EngagementMessage | null
+ *   Computes and returns the next appropriate engagement message or null when none should be shown.
+ *   Selection rules and side effects:
+ *   - Honors userPreferences.messageFrequency; returns null if set to 'off'.
+ *   - Applies exponential backoff based on engagementCount (baseInterval * 1.5^(min(engagementCount, 10))).
+ *   - Honors per-message cooldownDays and per-message condition checks (minStreak, minXP, maxLastSeen).
+ *   - Respects progressive-discovery gating and gamificationDeclined flag for messages like 'progressive-discovery'
+ *     and 'gamification-invite'.
+ *   - Sorts available messages by priority and returns the highest-priority match.
+ *   @param stats - runtime statistics used to evaluate message conditions (currentStreak, totalXP, lastActiveDate).
+ *   @returns the chosen EngagementMessage or null if no message should be shown at this time.
+ *
+ * - markMessageShown(messageId: string): void
+ *   Records that an engagement message was shown by updating lastEngagementMessage to today, incrementing engagementCount,
+ *   and persisting the state.
+ *
+ * - updatePreferences(preferences: Partial<OnboardingState['userPreferences']>): void
+ *   Merge-updates user preferences and persists the state.
+ *
+ * - reset(): void
+ *   Resets the onboarding state to safe defaults (tour unseen, no gamification, zero engagement, default preferences)
+ *   and persists the state.
+ *
+ * - getState(): OnboardingState
+ *   Returns a shallow copy of the current in-memory onboarding state for inspection.
+ *
+ * Tutorial-related helpers:
+ * - getTutorialProgress(): { currentStep: number; completedSteps: string[]; startedAt?: string }
+ *   Returns the current tutorial progress snapshot.
+ *
+ * - startTutorial(): void
+ *   Initializes tutorialProgress with startedAt timestamp, currentStep 0, and empty completedSteps, then persists.
+ *
+ * - advanceTutorialStep(stepId: string): boolean
+ *   Marks a tutorial step completed (adds to completedSteps if not present), increments currentStep, persists,
+ *   and returns true when the advancement is recorded.
+ *   @param stepId - identifier of the step to mark as completed.
+ *
+ * - completeTutorial(gamificationChoice: boolean): void
+ *   Marks tutorial/tour as completed, records completion timestamp, sets gamification opt-in according to the given
+ *   boolean, and persists state.
+ *   @param gamificationChoice - whether the user opted into gamification when completing the tutorial.
+ *
+ * - getTutorialSteps(): Array<{ id: string; title: string; content: string; eonWisdom?: string; action?: string; type: ...; interactionRequired?: boolean; imagePrompt?: string; }>
+ *   Returns the list of tutorial step definitions displayed to the user. Each step contains metadata used by the UI:
+ *   - id: unique identifier
+ *   - title: display title
+ *   - content: HTML/markup or text content
+ *   - eonWisdom: optional flavor text / narration
+ *   - action: label for the primary CTA
+ *   - type: discriminant for step rendering (e.g. 'welcome'|'practice'|'choice'|'philosophy'|'license'|'ethics'|'start-screen')
+ *   - interactionRequired: whether the step expects explicit user interaction before advancing
+ *   - imagePrompt: optional prompt text used for generating or displaying an illustrative image
+ *
+ * Progressive discovery / gamification flags:
+ * - markProgressiveDiscovery(): void
+ *   Sets the progressiveDiscovery flag and persists the state (used to later offer gamification as a "Maybe Later" flow).
+ *
+ * - markGamificationDeclined(): void
+ *   Marks that the user explicitly declined gamification and persists the state.
+ *
+ * - shouldOfferProgressiveDiscovery(): boolean
+ *   Returns true when the manager should show a progressive/gentle gamification offering. The check requires:
+ *   - progressiveDiscovery flag to be true,
+ *   - user has not opted into gamification,
+ *   - user has not explicitly declined gamification.
+ *
+ * - isEligibleForGamificationOffer(): boolean
+ *   Returns true if gamification can be offered (user has neither opted-in nor explicitly declined).
+ *
+ * Utility methods:
+ * - (private) loadState(): OnboardingState
+ *   Loads persisted state and merges it with defaults. If storage is absent or loading fails, returns default state.
+ *   Handles both versioned payload (StorageWrapper) and legacy storage formats. Catches and logs errors.
+ *
+ * - (private) saveState(): void
+ *   Persists the current in-memory state to configured storage, using optimistic update semantics for StorageWrapper
+ *   or direct update for legacy storage. Exceptions are caught and logged.
+ *
+ * - (private) getBaseInterval(): number
+ *   Returns the base interval (in days) used for engagement scheduling based on userPreferences.messageFrequency:
+ *   - 'active' => 1 day
+ *   - 'moderate' => 3 days
+ *   - 'subtle' => 7 days
+ *   - default/fallback => very large interval (effectively off)
+ *
+ * - (private) daysBetween(date1: string, date2: string): number
+ *   Returns the absolute number of days between two date strings. The result is the ceiling of the elapsed day count
+ *   (used for cooldown and recency checks).
+ *
+ * Notes and design considerations:
+ * - The class is designed to be resilient to schema changes: loadState merges persisted values into a default shape so
+ *   missing keys from older versions do not break runtime logic.
+ * - Message scheduling uses both per-message cooldowns and a global exponential backoff to avoid spamming users.
+ * - All persistence operations are guarded to avoid throwing to callers; failures are logged to console.warn.
+ *
+ * Example usage:
+ * // const mgr = new OnboardingManager('my.key', storage);
+ * // if (mgr.shouldShowTour()) { showTourUI(); }
+ *
+ */
 export class OnboardingManager {
   private state: OnboardingState;
   private storage: any;

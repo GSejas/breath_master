@@ -1,6 +1,55 @@
 import * as vscode from 'vscode';
 import { SettingsModule, SettingsState, ExperienceLevel, ValidationResult, MigrationRule } from './types';
 
+/**
+ * Modern Settings Manager
+ *
+ * A modular, type-safe settings management system for VS Code extensions.
+ * Provides validation, migration support, and user experience level filtering.
+ *
+ * ## Key Features:
+ * - **Modular Architecture**: Settings are organized into independent modules
+ * - **Type Safety**: Full TypeScript support with runtime validation
+ * - **Migration Support**: Automatic migration between settings versions
+ * - **User Levels**: Settings filtered by user experience level (BASIC/INTERMEDIATE/ADVANCED)
+ * - **Validation**: Comprehensive validation with detailed error reporting
+ * - **Categories**: Settings organized by category (BREATHING/ANIMATION/GAMIFICATION/etc.)
+ *
+ * ## Usage:
+ * ```typescript
+ * // Register modules during activation
+ * settingsManager.registerModule(new BreathingModule());
+ * settingsManager.registerModule(new AnimationModule());
+ *
+ * // Get settings with full type safety
+ * const breathing = await settingsManager.get<BreathingSettings>('breathing');
+ *
+ * // Set settings with validation
+ * await settingsManager.set('breathing', { ...breathing, enabled: true });
+ *
+ * // Export/Import settings
+ * const json = await settingsManager.exportSettings();
+ * await settingsManager.importSettings(json);
+ * ```
+ *
+ * ## Available Modules:
+ * - **BreathingModule**: Breathing patterns, session duration, auto-start settings
+ * - **AnimationModule**: Visual presets, intensity, timing, status bar configuration
+ * - **GamificationModule**: Progress tracking, challenges, privacy settings
+ *
+ * ## Settings Categories:
+ * - BREATHING: Core breathing functionality
+ * - ANIMATION: Visual feedback and animations
+ * - GAMIFICATION: Progress tracking and challenges
+ * - INTERFACE: UI/UX preferences
+ * - PRIVACY: Data sharing and privacy controls
+ * - ADVANCED: Developer and power-user options
+ *
+ * ## User Experience Levels:
+ * - BASIC: Essential settings for new users
+ * - INTERMEDIATE: Additional customization options
+ * - ADVANCED: Full control and advanced features
+ */
 export class ModernSettingsManager {
   private modules = new Map<string, SettingsModule>();
   private migrations: MigrationRule[] = [];
@@ -187,6 +236,10 @@ export class ModernSettingsManager {
             console.warn(`Invalid imported data for module '${moduleId}', skipping`);
             delete imported.modules[moduleId];
           }
+        } else {
+          // Remove data for unregistered modules
+          console.warn(`Unknown module '${moduleId}' in imported data, skipping`);
+          delete imported.modules[moduleId];
         }
       }
 

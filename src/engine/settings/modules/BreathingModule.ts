@@ -2,6 +2,7 @@ import { SettingsModule, SettingsCategory, ExperienceLevel, ValidationResult } f
 import { Validator } from '../validators';
 
 export interface BreathingSettings {
+  enabled: boolean;
   pattern: 'chill' | 'medium' | 'active' | 'boxing' | 'relaxing' | 'custom';
   customPattern: [number, number, number, number];
   sessionDuration: number; // minutes
@@ -29,6 +30,7 @@ export class BreathingModule implements SettingsModule<BreathingSettings> {
   );
 
   private readonly settingsValidator = Validator.object({
+    enabled: Validator.boolean(),
     pattern: this.patternValidator,
     customPattern: (value: unknown) => {
       const result = this.customPatternValidator(value);
@@ -54,6 +56,7 @@ export class BreathingModule implements SettingsModule<BreathingSettings> {
 
   getDefaults(): BreathingSettings {
     return {
+      enabled: true,
       pattern: 'chill',
       customPattern: [4, 4, 4, 4],
       sessionDuration: 5,
@@ -75,6 +78,7 @@ export class BreathingModule implements SettingsModule<BreathingSettings> {
       // Migrate from old flat structure
       const legacy = from as any;
       return {
+        enabled: true, // Enable by default for existing users
         pattern: legacy?.pattern || 'chill',
         customPattern: this.parseCustomPattern(legacy?.customPattern) || [4, 4, 4, 4],
         sessionDuration: 5,

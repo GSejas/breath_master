@@ -7,7 +7,10 @@
       "Bash(npm run test:cov:*)",
       "Bash(npm install:*)",
       "Bash(dir:*)",
-      "Bash(npm run dev:install:*)"
+      "Bash(npm run dev:install:*)",
+      "Bash(npm run test:integration:*)",
+      "Bash(npm version:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

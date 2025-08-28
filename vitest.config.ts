@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['test/unit/**/*.test.ts'],
+    exclude: ['test/unit/storage-wrapper.test.ts'], // VS Code APIs not available in unit tests
     globals: true,
     environment: 'node',
     coverage: {

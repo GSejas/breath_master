@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import { OnboardingManager } from './onboarding';
+import { ISettingsAdapter } from './settings/ISettingsAdapter';
 
 export interface TutorialStep {
   id: string;
@@ -24,7 +25,8 @@ export class TutorialService {
 
   constructor(
     private onboardingManager: OnboardingManager,
-    private extensionUri: vscode.Uri
+    private extensionUri: vscode.Uri,
+    private settings: ISettingsAdapter
   ) {}
 
   async startTutorial(): Promise<void> {
@@ -830,9 +832,8 @@ export class TutorialService {
   private async handleChoice(choice: string): Promise<void> {
     const gamificationEnabled = choice === 'tracked';
     
-    // Update VS Code configuration
-    const config = vscode.workspace.getConfiguration('breathMaster');
-    await config.update('enableGamification', gamificationEnabled, vscode.ConfigurationTarget.Global);
+    // Update settings via ModernSettingsManager
+    await this.settings.setGamificationEnabled(gamificationEnabled);
     
     // Show confirmation
     const message = gamificationEnabled 
@@ -846,8 +847,7 @@ export class TutorialService {
   }
 
   private async completeTutorial(): Promise<void> {
-    const config = vscode.workspace.getConfiguration('breathMaster');
-    const gamificationEnabled = config.get<boolean>('enableGamification', false);
+    const gamificationEnabled = await this.settings.getGamificationEnabled();
     
     this.onboardingManager.completeTutorial(gamificationEnabled);
     

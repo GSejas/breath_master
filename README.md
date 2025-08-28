@@ -3,6 +3,8 @@
   
   # 🧘‍♂️ Breath Master
   
+> The concept is **simple**. Visually integrate mindfulness, with a minimalist breathing animation. In between the builds, when, when Claude code `Garfunkles...`, we breath. Cheat Father time, and make the pesky gradual speedup of the flow of consciousness, that happens with age (everything goes faster), slows down.
+
   ```
      ╭─────────────────────────────────────╮
      │    ◉    Mindful    Coding    ◉     │

@@ -19,6 +19,12 @@ export interface AnimationSettings {
     showProgress: boolean;
     position: 'left' | 'right';
   };
+  notifications: {
+    phaseChanges: boolean;
+  };
+  timing: {
+    tickRate: number; // milliseconds between animation updates
+  };
 }
 
 export class AnimationModule implements SettingsModule<AnimationSettings> {
@@ -55,6 +61,12 @@ export class AnimationModule implements SettingsModule<AnimationSettings> {
       showPhase: Validator.boolean(),
       showProgress: Validator.boolean(),
       position: Validator.string({ enum: ['left', 'right'] })
+    }),
+    notifications: Validator.object({
+      phaseChanges: Validator.boolean()
+    }),
+    timing: Validator.object({
+      tickRate: Validator.number({ min: 50, max: 1000, integer: true })
     })
   });
 
@@ -71,6 +83,12 @@ export class AnimationModule implements SettingsModule<AnimationSettings> {
         showPhase: true,
         showProgress: false,
         position: 'left'
+      },
+      notifications: {
+        phaseChanges: false
+      },
+      timing: {
+        tickRate: 100
       }
     };
   }

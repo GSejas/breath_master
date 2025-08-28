@@ -23,6 +23,7 @@ describe('BreathingModule', () => {
       const defaults = module.getDefaults();
       
       expect(defaults).toEqual({
+        enabled: true,
         pattern: 'chill',
         customPattern: [4, 4, 4, 4],
         sessionDuration: 5,
@@ -39,6 +40,7 @@ describe('BreathingModule', () => {
   describe('validation', () => {
     it('should validate correct settings', () => {
       const validSettings = {
+        enabled: true,
         pattern: 'medium',
         customPattern: [6, 2, 8, 0],
         sessionDuration: 10,
@@ -220,6 +222,7 @@ describe('BreathingModule', () => {
 
     it('should validate boundary values', () => {
       const boundarySettings = {
+        enabled: true,
         pattern: 'custom',
         customPattern: [0, 0, 30, 30], // Min/max values
         sessionDuration: 1, // Min

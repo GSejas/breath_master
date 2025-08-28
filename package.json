@@ -60,195 +60,154 @@
       "type": "object",
       "title": "Breath Master",
       "properties": {
-        "breathMaster.enabled": {
+        "breathMaster.breathing.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the breathing status item."
+          "description": "Enable breathing guidance"
         },
-        "breathMaster.pattern": {
+        "breathMaster.breathing.pattern": {
           "type": "string",
-          "enum": [
-            "chill",
-            "medium",
-            "active",
-            "boxing",
-            "relaxing",
-            "custom"
-          ],
+          "enum": ["chill", "medium", "active", "boxing", "relaxing", "custom"],
           "default": "chill",
-          "description": "Breathing pattern: chill (6-0-8-0), medium (5-0-5-0), active (4-2-4-1), boxing (4-4-4-4), relaxing (4-7-8-0), custom (use customPattern)."
+          "description": "Breathing pattern: chill (6-0-8-0), medium (5-0-5-0), active (4-2-4-1), boxing (4-4-4-4), relaxing (4-7-8-0), custom (use customPattern)"
         },
-        "breathMaster.customPattern": {
+        "breathMaster.breathing.customPattern": {
           "type": "string",
           "default": "4-4-4-4",
           "pattern": "^\\d+-\\d+-\\d+-\\d+$",
-          "description": "Custom breathing pattern in seconds: inhale-hold-exhale-pause (e.g., '4-4-4-4')."
+          "description": "Custom breathing pattern in seconds: inhale-hold-exhale-pause (e.g., '4-4-4-4')"
         },
-        "breathMaster.intensity": {
+        "breathMaster.breathing.sessionDuration": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 120,
+          "description": "Default session duration in minutes"
+        },
+        "breathMaster.animation.intensity": {
           "type": "number",
           "default": 0.6,
           "minimum": 0,
           "maximum": 1,
-          "description": "Visual intensity (0-1) mapped perceptually; lower is subtler."
+          "description": "Visual intensity (0-1) - lower is subtler"
         },
-        "breathMaster.tickMs": {
+        "breathMaster.animation.preset": {
+          "type": "string",
+          "enum": ["default", "minimal", "nature", "custom"],
+          "default": "default",
+          "description": "Animation figure preset: default (circles), minimal (dots/lines), nature (organic symbols), custom (user-defined)"
+        },
+        "breathMaster.animation.tickMs": {
           "type": "number",
           "default": 100,
           "minimum": 16,
           "maximum": 1000,
-          "description": "Animation tick interval in milliseconds."
+          "description": "Animation tick interval in milliseconds"
         },
-        "breathMaster.showBoth": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show breathing indicators on both left and right sides of status bar."
-        },
-        "breathMaster.showNotifications": {
-          "type": "boolean",
-          "default": false,
-          "description": "Show phase change notifications (for maximum visibility)."
-        },
-        "breathMaster.enableGamification": {
+        "breathMaster.gamification.enabled": {
           "type": "boolean",
           "default": false,
           "description": "🎮 Opt-in to meditation tracking and gentle gamification. Your data stays local and private."
         },
-        "breathMaster.showStreak": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show daily meditation streak counter."
-        },
-        "breathMaster.showSessionTimer": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show today's meditation time."
-        },
-        "breathMaster.showXP": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show meditation XP and level progression."
-        },
-        "breathMaster.engagementLevel": {
+        "breathMaster.gamification.commitment": {
           "type": "string",
-          "enum": [
-            "subtle",
-            "moderate",
-            "active"
-          ],
-          "default": "subtle",
-          "description": "How often to show gentle encouragement messages."
+          "enum": ["minimal", "balanced", "nature"],
+          "default": "balanced",
+          "description": "Level of gamification elements in status bar. minimal: 'L 2 ▶', balanced: 'Lvl: 2 ▶', nature: '🌱 2 ▶'"
         },
-        "breathMaster.dataPrivacy": {
+        "breathMaster.gamification.dataPrivacy": {
           "type": "string",
-          "enum": [
-            "local-only",
-            "export-allowed"
-          ],
+          "enum": ["local-only", "export-allowed"],
           "default": "local-only",
-          "description": "Your data control: local-only (never leaves your machine) or export-allowed (you can export/backup)."
-        },
-        "breathMaster.sessionGoal.showInStatus": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show selected session time goal in the status bar when idle."
-        },
-        "breathMaster.sessionGoal.autoSuggest": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically suggest new goal set when leveling up."
-        },
-        "breathMaster.sessionGoal.rememberLast": {
-          "type": "boolean",
-          "default": true,
-          "description": "Remember and reuse the last chosen session time goal."
-        },
-        "breathMaster.pledge.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable pledge (intentional commitment) feature for bonus XP (neutral if not completed)."
+          "description": "Your data control: local-only (never leaves your machine) or export-allowed (you can export/backup)"
         },
         "breathMaster.stretch.compactMode": {
           "type": "string",
-          "enum": [
-            "auto",
-            "on",
-            "off"
-          ],
+          "enum": ["auto", "on", "off"],
           "default": "auto",
-          "description": "Display stretch preset notifications in compact form (action + time only). auto: shorten longer entries; on: always compact; off: always full with quotes."
+          "description": "Display stretch preset notifications in compact form. auto: shorten longer entries; on: always compact; off: always full with quotes"
         },
         "breathMaster.stretch.showEonQuotes": {
           "type": "boolean",
           "default": true,
-          "description": "Show Eon's inspirational quote lines inside stretch preset reminders. Disable for ultra-minimal prompts."
+          "description": "Show Eon's inspirational quote lines inside stretch preset reminders"
         },
         "breathMaster.stretch.iconStyle": {
           "type": "string",
-          "enum": [
-            "emoji",
-            "none"
-          ],
+          "enum": ["emoji", "none"],
           "default": "emoji",
-          "description": "Icon style for stretch reminders (emoji or none). (Future: svg)."
+          "description": "Icon style for stretch reminders (emoji or none)"
         },
-        "breathMaster.gentleReminder.cadence": {
+        "breathMaster.display.showBoth": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show breathing indicators on both left and right sides of status bar"
+        },
+        "breathMaster.display.showNotifications": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show phase change notifications (for maximum visibility)"
+        },
+        "breathMaster.display.showSessionTimer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show session timer in gamification display"
+        },
+        "breathMaster.display.gentleReminderCadence": {
           "type": "string",
-          "enum": [
-            "off",
-            "low",
-            "standard",
-            "high"
-          ],
+          "enum": ["off", "low", "standard", "high"],
           "default": "low",
-          "description": "Background encouragement frequency from Eon (off = none). Low: ~2/day, Standard: ~4/day, High: up to 6/day (only when idle & no session running)."
+          "description": "Background encouragement frequency from Eon. Low: ~2/day, Standard: ~4/day, High: up to 6/day (only when idle & no session running)"
         },
-        "breathMaster.gamificationCommitment": {
+        "breathMaster.sync.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable cloud sync for settings and progress data"
+        },
+        "breathMaster.sync.endpoint": {
           "type": "string",
-          "enum": [
-            "minimal",
-            "balanced",
-            "nature"
-          ],
-          "default": "balanced",
-          "description": "Level of gamification elements in status bar. minimal: 'L 2 ▶', balanced: 'Lvl: 2 ▶', nature: '🌱 2 ▶'"
+          "default": "https://api.breathmaster.app",
+          "description": "Backend sync endpoint URL"
         },
-        "breathMaster.animation.preset": {
-          "type": "string",
-          "enum": [
-            "default",
-            "minimal",
-            "nature",
-            "custom"
-          ],
-          "default": "default",
-          "description": "Animation figure preset: default (circles), minimal (dots/lines), nature (organic symbols), custom (user-defined)"
-        },
-        "breathMaster.animation.figures": {
-          "type": "object",
-          "properties": {
-            "inhale": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "VS Code icons for inhale phase (3-5 icons from small to large amplitude)"
-            },
-            "hold1": {
-              "type": "array", 
-              "items": { "type": "string" },
-              "description": "VS Code icons for first hold phase"
-            },
-            "exhale": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "VS Code icons for exhale phase (3-5 icons from large to small amplitude)"
-            },
-            "hold2": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "VS Code icons for second hold phase"
-            }
+        "breathMaster.sync.syncSettings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["breathing", "animation", "gamification", "stretch", "display"]
           },
-          "default": {},
-          "description": "Custom animation figures for each breathing phase (requires preset: 'custom')"
+          "default": ["breathing", "gamification"],
+          "description": "Which settings modules to sync to the cloud"
+        },
+        "breathMaster.sync.syncFrequency": {
+          "type": "string",
+          "enum": ["manual", "onchange", "hourly", "daily"],
+          "default": "onchange",
+          "description": "How often to sync data to the cloud"
+        },
+        "breathMaster.auth.autoLogin": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically sign in when extension loads"
+        },
+        "breathMaster.auth.rememberDevice": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remember this device for easier login"
+        },
+        "breathMaster.leaderboard.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Participate in the global meditation leaderboard (requires email verification)"
+        },
+        "breathMaster.leaderboard.displayName": {
+          "type": "string",
+          "default": "",
+          "description": "Your display name on the leaderboard (leave empty to use email prefix)"
+        },
+        "breathMaster.leaderboard.showInStatusBar": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show your leaderboard rank in the status bar"
         }
       }
     },
@@ -268,6 +227,10 @@
       {
         "command": "breathMaster.showTour",
         "title": "Breath Master: Show Welcome Tour"
+      },
+      {
+        "command": "breathMaster.debugAnimation",
+        "title": "Breath Master: Debug Animation"
       },
       {
         "command": "breathMaster.startCathedralTutorial",

@@ -34,6 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`breathe-engine.ts`** - Pure TypeScript breathing engine with smooth raised-cosine transitions, supports 5 patterns plus custom
 - **`gamification.ts`** - MeditationTracker class handling XP, levels, streaks, challenges, and pledges
 - **`onboarding.ts`** - OnboardingManager for first-time user experience and engagement levels
+- **`settings/`** - Modern settings architecture with ModernSettingsManager, SettingsAdapter, and modular validation
 
 ### VS Code Integration (`src/vscode/`)
 - **`extension.ts`** - Main extension entry point, status bar management, command registration, and stretch presets
@@ -66,15 +67,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Background color coding for active states (warning/error themes)
 - Rich markdown tooltips with progress information
 
-## Configuration Schema
+## Modern Settings System
 
-Key settings in `contributes.configuration`:
-- `breathMaster.pattern` - Breathing pattern selection
-- `breathMaster.customPattern` - Custom timing (4-4-4-4 format)
-- `breathMaster.enableGamification` - Opt-in meditation tracking
-- `breathMaster.intensity` - Visual animation intensity (0-1)
-- `breathMaster.dataPrivacy` - Privacy control (local-only/export-allowed)
-- `breathMaster.gamificationCommitment` - Status bar styling level (minimal/balanced/nature)
+**Settings Architecture:** Uses `ModernSettingsManager` with modular, validated settings instead of VS Code configuration.
+
+### Settings Modules:
+- **`BreathingModule`** - Breathing patterns, custom patterns, session duration, reminders
+- **`AnimationModule`** - Visual presets, intensity, custom figures, smoothing, status bar settings  
+- **`GamificationModule`** - Tracking enabled, commitment level, privacy, challenges, pledges, progression display
+
+### Key Settings:
+- **Pattern:** chill, medium, active, boxing, relaxing, custom
+- **Custom Pattern:** [inhale, hold1, exhale, hold2] in seconds  
+- **Animation Preset:** default, minimal, nature, custom
+- **Commitment Level:** minimal, balanced, nature (affects status bar styling)
+- **Privacy:** local-only, export-allowed
 
 ## Data Export Format
 ```json
@@ -121,8 +128,9 @@ Manual QA focus areas (see TESTING.md):
 3. Use `vscode.commands.registerCommand()`
 
 ### Adding New Settings
-1. Add to `contributes.configuration.properties` in package.json
-2. Access via `vscode.workspace.getConfiguration('breathMaster')`
+1. Add to appropriate settings module in `src/engine/settings/modules/`
+2. Update module's interface, defaults, and validation
+3. Access via `SettingsAdapter` methods like `settings.getBreathingPattern()`
 
 ### Extending Gamification
 - All progression logic in `gamification.ts`
