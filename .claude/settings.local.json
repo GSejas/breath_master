@@ -10,7 +10,8 @@
       "Bash(npm run dev:install:*)",
       "Bash(npm run test:integration:*)",
       "Bash(npm version:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
