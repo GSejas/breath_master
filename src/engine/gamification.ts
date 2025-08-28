@@ -125,12 +125,15 @@ export class MeditationTracker {
   private isHovering: boolean = false;
   private hoverStartTime: number = 0;
   private completedCycles: number = 0;
-  private storage: any; // VS Code's ExtensionContext.globalState
+  private storage: any; // VS Code's ExtensionContext.globalState or StorageWrapper
   private activeSession: ActiveSessionRuntime | null = null;
   private activePledge: ActivePledge | null = null;
+  private useVersionedStorage: boolean = false;
 
   constructor(private storageKey: string = 'breatheGlow.meditationStats', storage?: any) {
     this.storage = storage;
+    // Detect if we're using the new StorageWrapper (has version property in returned data)
+    this.useVersionedStorage = storage && typeof storage.get === 'function' && typeof storage.update === 'function' && storage.constructor.name === 'StorageWrapper';
     this.stats = this.loadStats();
     this.ensureDailyChallenges();
   }
@@ -139,8 +142,14 @@ export class MeditationTracker {
     try {
       let stored;
       if (this.storage) {
-        // Use VS Code storage
-        stored = this.storage.get(this.storageKey);
+        if (this.useVersionedStorage) {
+          // Use new StorageWrapper
+          const versionedData = this.storage.get(this.storageKey);
+          stored = versionedData?.payload;
+        } else {
+          // Use legacy VS Code storage
+          stored = this.storage.get(this.storageKey);
+        }
       } else {
         // Fallback to in-memory
         stored = null;
@@ -178,8 +187,13 @@ export class MeditationTracker {
   private saveStats(): void {
     try {
       if (this.storage) {
-        // Use VS Code storage
-        this.storage.update(this.storageKey, this.stats);
+        if (this.useVersionedStorage) {
+          // Use new StorageWrapper with optimistic updates
+          this.storage.update(this.storageKey, (current: MeditationStats) => this.stats, this.stats);
+        } else {
+          // Use legacy VS Code storage
+          this.storage.update(this.storageKey, this.stats);
+        }
       }
       // If no storage available, stats remain in memory only
     } catch (error) {
@@ -291,6 +305,14 @@ export class MeditationTracker {
 
   getStats(): MeditationStats {
     return { ...this.stats };
+  }
+
+  /**
+   * Reload stats from storage (for cross-window sync)
+   */
+  reloadFromStorage(): void {
+    const newStats = this.loadStats();
+    this.stats = newStats;
   }
 
   getDailyGoalProgress(): number {

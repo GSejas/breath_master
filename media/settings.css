@@ -1,0 +1,255 @@
+.settings-header {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  margin-bottom: 16px;
+}
+
+.settings-header h2 {
+  margin: 0 0 12px 0;
+  color: var(--vscode-foreground);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.experience-level-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.experience-level-selector label {
+  font-size: 13px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.experience-level-selector select {
+  background: var(--vscode-dropdown-background);
+  border: 1px solid var(--vscode-dropdown-border);
+  color: var(--vscode-dropdown-foreground);
+  padding: 4px 8px;
+  font-size: 13px;
+  border-radius: 2px;
+}
+
+.settings-content {
+  min-height: 200px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.settings-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.category {
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.category h3 {
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--vscode-sideBar-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.category .modules {
+  padding: 16px;
+}
+
+.module {
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.module:last-child {
+  margin-bottom: 0;
+}
+
+.module-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.module-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  margin: 0;
+}
+
+.module-description {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  margin: 4px 0 0 0;
+}
+
+.module-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.module-actions button {
+  background: var(--vscode-button-secondaryBackground);
+  border: 1px solid var(--vscode-button-border);
+  color: var(--vscode-button-secondaryForeground);
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.module-actions button:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.setting-group {
+  margin-bottom: 16px;
+}
+
+.setting-group:last-child {
+  margin-bottom: 0;
+}
+
+.setting-label {
+  display: block;
+  font-size: 13px;
+  color: var(--vscode-foreground);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.setting-input {
+  width: 100%;
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border);
+  color: var(--vscode-input-foreground);
+  padding: 6px 8px;
+  font-size: 13px;
+  border-radius: 2px;
+}
+
+.setting-input:focus {
+  outline: none;
+  border-color: var(--vscode-focusBorder);
+}
+
+.setting-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-checkbox input[type="checkbox"] {
+  margin: 0;
+}
+
+.setting-help {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.animation-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 2px;
+  font-family: monospace;
+  margin-top: 8px;
+}
+
+.animation-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.animation-phase-label {
+  font-size: 10px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.animation-phase-icons {
+  font-size: 16px;
+}
+
+.settings-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--vscode-panel-border);
+  display: flex;
+  gap: 12px;
+}
+
+.settings-actions button {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.settings-actions button.secondary {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border-color: var(--vscode-button-border);
+}
+
+.settings-actions button.secondary:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.settings-actions button.danger {
+  background: var(--vscode-inputValidation-errorBackground);
+  color: var(--vscode-inputValidation-errorForeground);
+  border-color: var(--vscode-inputValidation-errorBorder);
+}
+
+.settings-actions button.danger:hover {
+  opacity: 0.9;
+}
+
+.experience-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.experience-badge.basic {
+  background: var(--vscode-charts-green);
+  color: white;
+}
+
+.experience-badge.intermediate {
+  background: var(--vscode-charts-orange);
+  color: white;
+}
+
+.experience-badge.advanced {
+  background: var(--vscode-charts-red);
+  color: white;
+}

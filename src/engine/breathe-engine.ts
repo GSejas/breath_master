@@ -33,25 +33,23 @@ const PATTERNS: Record<Exclude<Pattern, "custom">, PhaseDurations> = {
 const DEFAULT_FIGURES: AnimationFigures = {
   inhale: ["$(circle-small-filled)", "$(circle-filled)", "$(record)"],
   hold1: ["$(record)", "$(record)", "$(record)"],
-  // small -> large for every phase to keep amplitude mapping consistent
-  exhale: ["$(circle-small-filled)", "$(circle-filled)", "$(record)"],
+  // large -> small for exhale (shrinking as amplitude decreases from 1 to 0)
+  exhale: ["$(record)", "$(circle-filled)", "$(circle-small-filled)"],
   hold2: ["$(circle-small-filled)", "$(circle-small-filled)", "$(circle-small-filled)"]
 };
 
 const MINIMAL_FIGURES: AnimationFigures = {
   inhale: ["$(dot-fill)", "$(circle-outline)", "$(circle-filled)"],
   hold1: ["$(circle-filled)", "$(circle-filled)", "$(circle-filled)"],
-  // normalized to small -> large (fixed order)
-  exhale: ["$(dot-fill)", "$(circle-outline)", "$(circle-filled)"],
+  // large -> small for exhale (shrinking as amplitude decreases from 1 to 0)
+  exhale: ["$(circle-filled)", "$(circle-outline)", "$(dot-fill)"],
   hold2: ["$(dot-fill)", "$(dot-fill)", "$(dot-fill)"]
 };
-
 const NATURE_FIGURES: AnimationFigures = {
-  inhale: ["$(seed)", "$(tree)", "$(globe)"],
-  hold1: ["$(globe)", "$(globe)", "$(globe)"],
-  // small -> large mapping for exhale as well
-  exhale: ["$(seed)", "$(tree)", "$(globe)"],
-  hold2: ["$(seed)", "$(seed)", "$(seed)"]
+  inhale: ["🌱", "🌿", "🌳"],
+  hold1: ["🌳", "🌱","🌳","🌱", "🌳"],
+  exhale: ["🌳", "🌿", "🌱"],
+  hold2: ["🌱", "🌱", "🌱"]
 };
 
 const PRESET_FIGURES: Record<Exclude<AnimationPreset, "custom">, AnimationFigures> = {
@@ -226,18 +224,19 @@ export class BreatheEngine {
     preset: AnimationPreset = "default",
     customFigures?: AnimationFigures
   ): string {
-    let figures: AnimationFigures;
-    
+    // Defensive: preset may come from user settings and include unknown names.
+    // Resolve figures safely and fall back to defaults when missing.
+    let figures: AnimationFigures | undefined;
+
     if (preset === "custom" && customFigures) {
       figures = customFigures;
-    } else if (preset !== "custom") {
-      figures = PRESET_FIGURES[preset];
     } else {
-      figures = DEFAULT_FIGURES; // fallback
+      const key = preset as keyof typeof PRESET_FIGURES;
+      figures = PRESET_FIGURES[key] ?? DEFAULT_FIGURES;
     }
 
-    const phaseFigures = figures[phase];
-    if (!phaseFigures || phaseFigures.length === 0) {
+    const phaseFigures = (figures as any)?.[phase] as string[] | undefined;
+    if (!Array.isArray(phaseFigures) || phaseFigures.length === 0) {
       return "$(pulse)"; // fallback icon
     }
 

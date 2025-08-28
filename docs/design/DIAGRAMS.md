@@ -10,7 +10,7 @@ graph TD
   B --> C[BreatheEngine]
   B --> D[MeditationTracker]
   B --> E[OnboardingManager]
-  D --> F[Storage (globalState)]
+  D --> F[Storage globalState]
   E --> F
   B --> G[Status Bar Items]
   B --> H[Notifications]
@@ -102,7 +102,7 @@ graph LR
   subgraph Local Developer
     LT[Tracker] --> LA[Aggregate Daily]
   end
-  LA -- anonymized metrics --> S[(Team Collector?)]
+  LA -- anonymized metrics --> S[(Team Collector)]
   S -- summarized trends --> Dash[Wellness Dashboard]
   note right of Dash: No raw breath events
 ```

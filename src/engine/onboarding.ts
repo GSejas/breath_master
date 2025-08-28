@@ -139,15 +139,29 @@ const ENGAGEMENT_MESSAGES: EngagementMessage[] = [
 export class OnboardingManager {
   private state: OnboardingState;
   private storage: any;
+  private useVersionedStorage: boolean = false;
 
   constructor(private storageKey: string = 'breathMaster.onboarding', storage?: any) {
     this.storage = storage;
+    // Detect if we're using the new StorageWrapper (check constructor name)
+    this.useVersionedStorage = storage && typeof storage.get === 'function' && typeof storage.update === 'function' && storage.constructor.name === 'StorageWrapper';
     this.state = this.loadState();
   }
 
   private loadState(): OnboardingState {
     try {
-      const stored = this.storage?.get(this.storageKey);
+      let stored;
+      if (this.storage) {
+        if (this.useVersionedStorage) {
+          // Use new StorageWrapper
+          const versionedData = this.storage.get(this.storageKey);
+          stored = versionedData?.payload;
+        } else {
+          // Use legacy VS Code storage
+          stored = this.storage.get(this.storageKey);
+        }
+      }
+      
       if (stored) {
         return {
           ...stored,
@@ -187,7 +201,15 @@ export class OnboardingManager {
 
   private saveState(): void {
     try {
-      this.storage?.update(this.storageKey, this.state);
+      if (this.storage) {
+        if (this.useVersionedStorage) {
+          // Use new StorageWrapper with optimistic updates
+          this.storage.update(this.storageKey, (current: OnboardingState) => this.state, this.state);
+        } else {
+          // Use legacy VS Code storage
+          this.storage.update(this.storageKey, this.state);
+        }
+      }
     } catch (error) {
       console.warn('Failed to save onboarding state:', error);
     }
@@ -195,6 +217,14 @@ export class OnboardingManager {
 
   shouldShowTour(): boolean {
     return !this.state.hasSeenTour;
+  }
+
+  /**
+   * Reload state from storage (for cross-window sync)
+   */
+  reloadFromStorage(): void {
+    const newState = this.loadState();
+    this.state = newState;
   }
 
   markTourCompleted(optedInToGamification: boolean = false): void {
@@ -497,7 +527,7 @@ export class OnboardingManager {
             <li>✅ Study the source code and learn from it</li>
           </ul>
           <div class="license-box">
-            <p><strong>Copyright (c) 2024 Breath Master Contributors</strong></p>
+            <p><strong>Copyright (c) 2025 Breath Master Contributors</strong></p>
             <p class="license-text">Permission is hereby granted, free of charge, to any person obtaining a copy of this software... to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software.</p>
           </div>
           <p class="freedom-note">🌟 True wisdom is meant to be shared freely, like the wind through leaves.</p>

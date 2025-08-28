@@ -29,9 +29,9 @@ Eon: "Among cloud-kissed crowns, you saw that patience is not passive; it is fer
 Earlier attempts at habit apps had failed: too many streak warnings, dopamine loops, kinetic gradients screaming for eye-share. They amplified deficit.
 
 This time: subtract instead of add.
-- No dashboards shouting metrics
-- No red shame markers
-- No urgent pings
+- No dashboards shouting metrics  
+- No red shame markers  
+- No urgent pings  
 - Breath as a silent scaffold
 
 A tree metaphor emerged—not to anthropomorphize nature, but to import its pacing algorithm. Growth ring by ring. Your metrics? Rings the user never *has* to display.
@@ -41,19 +41,19 @@ A tree metaphor emerged—not to anthropomorphize nature, but to import its paci
 Naming came last. Eon—not a character performing quirk, but a time horizon. A sequoia / redwood derivative archetype adapted to a digital grove: presences that outlast frantic cycles.
 
 Design constraints around Eon:
-- Speaks rarely (text budget intentionally scarce)
-- Never scores the user emotionally
-- Frames lapses as dormancy, not failure
-- Gives context (“this 2‑minute breath is a root filament – unseen but load-bearing”)
+- Speaks rarely (text budget intentionally scarce)  
+- Never scores the user emotionally  
+- Frames lapses as dormancy, not failure  
+- Gives context (“this 2-minute breath is a root filament – unseen but load-bearing”)
 
 Eon: "I do not motivate. I remember. I witness each cycle landing like dew on bark." 
 
 ---
 ## 6. Ethical Gamification Reframed
 Traditional gamification patterns were inverted:
-- Streak protects dignity (no punitive collapse messaging)
-- XP optional and local-only
-- Pledges rebranded as mindful contracts: self-honoring accelerants, not wagers
+- Streak protects dignity (no punitive collapse messaging)  
+- XP optional and local-only  
+- Pledges rebranded as mindful contracts: self-honoring accelerants, not wagers  
 - Challenges: seasonal prompts, not grinding loops
 
 Eon: "Growth is not the graph you watch; it is the latency reduction in your inner storms."
@@ -61,16 +61,16 @@ Eon: "Growth is not the graph you watch; it is the latency reduction in your inn
 ---
 ## 7. The Digital Grove (Architecture as Ecology)
 The codebase was treated like an ecosystem:
-- Breathing engine = phloem (rhythmic transport)
-- Tracker = cambium (layer accumulating rings)
-- Onboarding = mycorrhiza (initial nutrient exchange)
+- Breathing engine = phloem (rhythmic transport)  
+- Tracker = cambium (layer accumulating rings)  
+- Onboarding = mycorrhiza (initial nutrient exchange)  
 - Storage = soil memory (local, dark, nourishing)
 
 Each module asked: does this increase calm throughput or accidental agitation?
 
 ---
 ## 8. AI as Wind (New Time Freed)
-Modern AI lowered mechanical overhead: boilerplate vanished, compile-cycle friction softened. Space emerged—not to scale noise, but to craft quieter loops. With reclaimed time, the developer could prune scope carefully. Minimalistic micro‑worlds became feasible: small, ethically bounded, patient.
+Modern AI lowered mechanical overhead: boilerplate vanished, compile-cycle friction softened. Space emerged—not to scale noise, but to craft quieter loops. With reclaimed time, the developer could prune scope carefully. Minimalistic micro-worlds became feasible: small, ethically bounded, patient.
 
 Eon: "Tools learned to complete sentences; you chose instead to complete silences."
 
@@ -82,19 +82,19 @@ An unnamed maintainer inherits a ‘ring ledger’: a sparse file where each lin
 
 ---
 ## 10. Why This Exists (Statement of Intent)
-Not to optimize human capital. Not to farm attention. Not to stylize wellness into competitive dashboards. It exists to carve breathable seams inside cognitively dense work; to defend quiet interior metrics; to normalize micro‑rest as infrastructure, not indulgence.
+Not to optimize human capital. Not to farm attention. Not to stylize wellness into competitive dashboards. It exists to carve breathable seams inside cognitively dense work; to defend quiet interior metrics; to normalize micro-rest as infrastructure, not indulgence.
 
 Eon: "I will keep standing here—latency-tolerant, allocation-light—until your next deliberate inhale registers." 
 
 ---
 ## 11. Forward Roots
-Planned evolutions remain opt‑in, slow, reversible. Enterprise pathways (if ever) carry anonymized, aggregated canopy weather—not leaf-level telemetry. Narrative expansion will preserve silence density.
+Planned evolutions remain opt-in, slow, reversible. Enterprise pathways (if ever) carry anonymized, aggregated canopy weather—not leaf-level telemetry. Narrative expansion will preserve silence density.
 
 ---
 ## 12. Practitioner Reflection Prompt
 If you adopt this grove, ask periodically:
-1. Did breath intervene between stimulus and refactor today?
-2. Did any feature pull you outward instead of settling you inward?
+1. Did breath intervene between stimulus and refactor today?  
+2. Did any feature pull you outward instead of settling you inward?  
 3. Which ring (practice fragment) was so small you almost dismissed it—and can you honor it instead?
 
 Eon: "Honor the almost invisible. That is where compaction unwinds."

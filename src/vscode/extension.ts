@@ -9,6 +9,11 @@ import { MeditationTracker } from "../engine/gamification";
 import { OnboardingManager } from "../engine/onboarding";
 import { TutorialService } from "../engine/tutorial-service";
 import { JourneyCoverageTracker } from './journey-coverage';
+import { StorageWrapper } from './storage-wrapper';
+import { ModernSettingsManager } from '../engine/settings/ModernSettingsManager';
+import { AlphaSettingsBootstrap } from '../engine/settings/AlphaSettingsBootstrap';
+import { SettingsAdapter } from '../engine/settings/SettingsAdapter';
+import { SettingsWebviewProvider } from './ui/SettingsWebviewProvider';
 
 let engine: BreatheEngine;
 let statusBarItem: vscode.StatusBarItem;
@@ -21,6 +26,10 @@ let meditationTracker: MeditationTracker;
 let onboardingManager: OnboardingManager;
 let tutorialService: TutorialService;
 let journeyCoverage: JourneyCoverageTracker;
+let storageWrapper: StorageWrapper;
+let storageWatcher: vscode.FileSystemWatcher;
+let settingsManager: ModernSettingsManager;
+let settings: SettingsAdapter;
 // Track whether we've bound the new quick pledge command
 let quickPledgeRegistered = false;
 // Stretch preset scheduling
@@ -143,19 +152,26 @@ const STRETCH_PRESETS: StretchPreset[] = [
 // Active stretch preset state now tracks completed steps
 let activeStretchPreset: { preset: StretchPreset; startedAt: number; timers: NodeJS.Timeout[]; completed: number } | null = null;
 
-export function activate(context: vscode.ExtensionContext): void {
-  // Initialize breathing engine with current pattern
-  const config = vscode.workspace.getConfiguration("breathMaster");
-  const pattern = config.get<Pattern>("pattern", "chill");
-  const customPattern = config.get<string>("customPattern", "4-4-4-4");
-  
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  // Initialize modern settings system (alpha approach)
+  settingsManager = new ModernSettingsManager(context);
+  const bootstrap = new AlphaSettingsBootstrap(settingsManager);
+  await bootstrap.initialize();
+  settings = new SettingsAdapter(settingsManager);
+
+  // Initialize breathing engine with modern settings
+  const pattern = await settings.getBreathingPattern() as Pattern;
+  const customPattern = (await settings.getCustomPattern()).join('-');
   engine = new BreatheEngine(pattern, customPattern);
 
-  // Initialize meditation tracker with VS Code storage
-  meditationTracker = new MeditationTracker('breathMaster.meditationStats', context.globalState);
+  // Initialize storage wrapper for cross-window sync
+  storageWrapper = new StorageWrapper(context, { touchFileName: 'breath-master-state.touch' });
+
+  // Initialize meditation tracker with versioned storage
+  meditationTracker = new MeditationTracker('breathMaster.meditationStats', storageWrapper);
   
-  // Initialize onboarding manager
-  onboardingManager = new OnboardingManager('breathMaster.onboarding', context.globalState);
+  // Initialize onboarding manager with versioned storage
+  onboardingManager = new OnboardingManager('breathMaster.onboarding', storageWrapper);
   
   // Initialize tutorial service
   tutorialService = new TutorialService(onboardingManager, context.extensionUri);
@@ -164,8 +180,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // Create left-aligned status bar item
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   statusBarItem.text = "$(pulse)";
-  statusBarItem.tooltip = "Breath Master - Click to toggle";
-  statusBarItem.command = "breathMaster.toggle";
+  statusBarItem.tooltip = "Breath Master - Click for actions menu";
+  statusBarItem.command = "breathMaster.statusBarMenu";
   statusBarItem.show();
 
   // Create right-aligned status bar item for pattern cycling (fun button!)
@@ -176,7 +192,8 @@ export function activate(context: vscode.ExtensionContext): void {
   statusBarItemRight.show();
 
   // Create gamification status bar item (if enabled)
-  if (config.get<boolean>("enableGamification", true)) {
+  const gamificationEnabled = await settings.getGamificationEnabled();
+  if (gamificationEnabled) {
     // Create square indicator (stops any active session/stretch)
     statusBarItemSquare = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
     statusBarItemSquare.command = "breathMaster.stopAny";
@@ -192,8 +209,11 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Register commands
   const toggleCommand = vscode.commands.registerCommand("breathMaster.toggle", toggleBreathing);
+  const statusBarMenuCommand = vscode.commands.registerCommand("breathMaster.statusBarMenu", showStatusBarMenu);
+  const microSessionCommand = vscode.commands.registerCommand("breathMaster.microSession", startMicroSession);
   const cycleCommand = vscode.commands.registerCommand("breathMaster.cyclePattern", cyclePattern);
   const meditateCommand = vscode.commands.registerCommand("breathMaster.toggleMeditation", toggleMeditation);
+  const restartBreathingCommand = vscode.commands.registerCommand("breathMaster.restartBreathing", restartAnimation);
   // New session / pledge related commands
   const startSessionCommand = vscode.commands.registerCommand('breathMaster.startSession', async () => {
     const tracker = meditationTracker as MeditationTracker;
@@ -668,10 +688,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.showInformationMessage('🏆 Leaderboards planned: opt-in, privacy-first, company/team & global tiers. (Coming soon)');
   });
 
-  // Register for configuration changes
+  // Register for configuration changes - simplified for alpha
   const configListener = vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
     if (event.affectsConfiguration("breathMaster")) {
-      restartAnimation();
+      restartAnimation(); // Fire and forget for now
       if (statusBarItemGamification) {
         updateGamificationDisplay();
       }
@@ -684,8 +704,11 @@ export function activate(context: vscode.ExtensionContext): void {
     statusBarItemGamification,
     statusBarItemSquare,
     toggleCommand, 
+    statusBarMenuCommand,
+    microSessionCommand,
     cycleCommand, 
     meditateCommand,
+    restartBreathingCommand,
     tourCommand,
     cathedralTutorialCommand,
     exportCommand,
@@ -716,52 +739,147 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // Set up cross-window storage sync
+  storageWatcher = storageWrapper.createTouchWatcher((key: string, version: number) => {
+    // Reload data when other windows make changes
+    if (key === 'breathMaster.meditationStats') {
+      meditationTracker.reloadFromStorage();
+      updateGamificationDisplay(); // Refresh UI with new data
+    } else if (key === 'breathMaster.onboarding') {
+      onboardingManager.reloadFromStorage();
+    }
+  });
+
+  context.subscriptions.push(storageWatcher);
+
+  // Register modern settings webview (alpha)
+  const settingsProvider = new SettingsWebviewProvider(context, settingsManager);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('breathMaster.settingsPanel', settingsProvider)
+  );
+
   // Show tour if first time
   if (onboardingManager.shouldShowTour()) {
     setTimeout(() => showTour(), 2000); // Delay to let VS Code finish loading
   }
 
-  // Start the breathing animation
-  startAnimation();
+  // Start the breathing animation - this should always be running
+  try {
+    await startAnimation();
+    console.log('🔍 Breathing animation started successfully');
+  } catch (error) {
+    console.error('🔍 Failed to start breathing animation:', error);
+    // Try again after a short delay
+    setTimeout(async () => {
+      try {
+        await startAnimation();
+        console.log('🔍 Breathing animation started on retry');
+      } catch (retryError) {
+        console.error('🔍 Failed to start breathing animation on retry:', retryError);
+      }
+    }, 1000);
+  }
 
   // Gentle reminder scheduling scaffold
   scheduleGentleReminders();
 }
 
-function startAnimation(): void {
-  const config = vscode.workspace.getConfiguration("breathMaster");
+async function startAnimation(): Promise<void> {
+  console.log('🔍 startAnimation() called - loading settings...');
   
-  if (!config.get<boolean>("enabled", true)) {
-    stopAnimation();
-    return;
-  }
+  try {
+    // Use modern settings with error handling
+    let intensity: number;
+    let animationPreset: AnimationPreset;
+    let modernFigures: any;
+    let smoothingEnabled: boolean;
+    let smoothingFactor: number;
+    
+    try {
+      intensity = await settings.getAnimationIntensity();
+      console.log('🔍 Loaded intensity:', intensity);
+    } catch (error) {
+      console.error('🔍 Failed to load intensity, using default:', error);
+      intensity = 0.7; // Default fallback
+    }
+    
+    try {
+      animationPreset = await settings.getAnimationPreset() as AnimationPreset;
+      modernFigures = await settings.getAnimationFigures();
+      console.log('🔍 Loaded animation preset:', animationPreset);
+    } catch (error) {
+      console.error('🔍 Failed to load animation settings, using defaults:', error);
+      animationPreset = 'default' as AnimationPreset;
+      modernFigures = {
+        inhale: ['$(circle-small)', '$(circle)', '$(circle-filled)', '$(record)', '$(circle-large-filled)'],
+        hold1: ['$(record)', '$(record)', '$(record)'],
+        exhale: ['$(circle-large-filled)', '$(record)', '$(circle-filled)', '$(circle)', '$(circle-small)'],
+        hold2: ['$(circle-small)', '$(circle-small)', '$(circle-small)']
+      };
+    }
 
-  const tickMs = config.get<number>("tickMs", 100);
-  const intensity = config.get<number>("intensity", 0.6); // Remove aggressive scaling
-  const showBoth = config.get<boolean>("showBoth", true);
-  const showNotifications = config.get<boolean>("showNotifications", false);
+    // Only apply normalization for custom presets. For named presets we want
+    // to preserve the figures supplied by the settings module so cycles take effect.
+    if (animationPreset === 'custom') {
+      try {
+        modernFigures = normalizeFigures('custom', modernFigures as any);
+      } catch (err) {
+        console.warn('🔍 normalizeFigures failed for custom preset, falling back to defaults:', err);
+        modernFigures = normalizeFigures('default', undefined);
+      }
+    } else {
+      // Ensure we have a figures object from settings; if not, read full animation settings
+      if (!modernFigures || typeof modernFigures !== 'object') {
+        try {
+          const currentSettings = await settings.getAnimationSettings();
+          modernFigures = currentSettings.figures;
+        } catch {
+          modernFigures = normalizeFigures('default', undefined);
+        }
+      }
+    }
+    
+    try {
+      smoothingEnabled = await settings.getSmoothingEnabled();
+      smoothingFactor = await settings.getSmoothingFactor();
+      console.log('🔍 Loaded smoothing - enabled:', smoothingEnabled, 'factor:', smoothingFactor);
+    } catch (error) {
+      console.error('🔍 Failed to load smoothing settings, using defaults:', error);
+      smoothingEnabled = true;
+      smoothingFactor = 0.3;
+    }
 
-  // Show/hide right status bar item based on setting
-  if (showBoth) {
-    statusBarItemRight.show();
-  } else {
-    statusBarItemRight.hide();
-  }
+    const tickMs = 100; // Keep consistent timing
+    const showBoth = true; // Always show for now
+    const showNotifications = false; // Keep minimal
 
-  if (animationTimer) {
-    clearInterval(animationTimer);
-  }
+    // Show/hide right status bar item based on setting
+    if (showBoth) {
+      statusBarItemRight.show();
+    } else {
+      statusBarItemRight.hide();
+    }
 
-  // Prepare normalized figures (validate once per animation start)
-  const animationPreset = config.get<AnimationPreset>("animation.preset", "default");
-  const customFiguresRaw = config.get<any>("animation.figures", {});
-  const figures = normalizeFigures(animationPreset, customFiguresRaw);
+    // Clear any existing timer
+    if (animationTimer) {
+      clearInterval(animationTimer);
+      animationTimer = undefined;
+    }
+    
+    // Update status bar immediately to show we're starting
+    const patternDisplay = engine.pattern.charAt(0).toUpperCase() + engine.pattern.slice(1);
+    statusBarItemRight.text = `$(sync~spin) ${patternDisplay}`;
+    statusBarItemRight.tooltip = `Starting ${patternDisplay} breathing...`;
+    console.log('🔍 Updated status bar to show starting animation');
 
-  // simple smoothing state to reduce index churn
-  let smoothedAmp = 0;
-  const alpha = 0.15; // smoothing factor: lower = heavier smoothing
+    // Modern smoothing state
+    let smoothedAmp = 0;
+    const alpha = smoothingEnabled ? smoothingFactor : 1; // No smoothing if disabled
 
-  animationTimer = setInterval(() => {
+    // Set up animation timer with error handling
+    console.log('🔍 Setting up animation timer...');
+    animationTimer = setInterval(() => {
+      try {
     const amplitude = engine.getAmplitude();
     // Apply smoothing to raw amplitude first, then scale
     smoothedAmp = (1 - alpha) * smoothedAmp + alpha * amplitude;
@@ -770,11 +888,12 @@ function startAnimation(): void {
     const detailedPhase = engine.getDetailedPhase();
 
     // Get animation figure based on current phase and smoothed amplitude
+    // Force custom mode to use modernFigures since BreatheEngine only knows about default/minimal/nature
     const sizeIcon = BreatheEngine.getAnimationFigure(
       detailedPhase.phase,
       scaledAmplitude,
-      animationPreset,
-      figures
+      "custom", // Force custom so it uses modernFigures
+      modernFigures
     );
 
     // Add directional phase icons for visual breathing cues
@@ -898,7 +1017,41 @@ function startAnimation(): void {
         statusBarItem.backgroundColor = undefined;
       }
     } catch { /* ignore if theme/color unavailable */ }
-  }, tickMs);
+      } catch (timerError) {
+        console.error('🔍 Error in animation timer loop:', timerError);
+        // Try to recover by showing current pattern
+        const patternDisplay = engine.pattern.charAt(0).toUpperCase() + engine.pattern.slice(1);
+        statusBarItemRight.text = `$(alert) ${patternDisplay}`;
+        statusBarItemRight.tooltip = `Error in breathing animation - click to restart`;
+      }
+    }, tickMs);
+    
+    // Validate that timer was created successfully
+    if (animationTimer) {
+      console.log('🔍 Animation timer started successfully');
+    } else {
+      throw new Error('Failed to create animation timer');
+    }
+    
+  } catch (startError) {
+    console.error('🔍 Failed to start animation:', startError);
+    // Fallback: show error state and allow manual restart
+    const patternDisplay = engine.pattern.charAt(0).toUpperCase() + engine.pattern.slice(1);
+    statusBarItemRight.text = `$(error) ${patternDisplay}`;
+    statusBarItemRight.tooltip = `Failed to start breathing animation - click to restart`;
+    
+    // Try to restart after a delay
+    setTimeout(async () => {
+      console.log('🔍 Attempting to restart animation after error...');
+      try {
+        await startAnimation();
+      } catch (retryError) {
+        console.error('🔍 Failed to restart animation:', retryError);
+      }
+    }, 2000);
+    
+    throw startError; // Re-throw to allow calling code to handle
+  }
 }
 
 function stopAnimation(): void {
@@ -906,9 +1059,12 @@ function stopAnimation(): void {
     clearInterval(animationTimer);
     animationTimer = undefined;
   }
-  statusBarItem.text = "$(pulse)$(stop) breathMaster";
-  statusBarItem.tooltip = "breathMaster - Click to enable";
-  statusBarItemRight.text = "$(pulse)$(stop) Off";
+  statusBarItem.text = "$(pulse) breathMaster";
+  statusBarItem.tooltip = "breathMaster - Click for options";
+  
+  // Show current pattern instead of "Paused" since we don't have disabled state
+  const patternDisplay = engine.pattern.charAt(0).toUpperCase() + engine.pattern.slice(1);
+  statusBarItemRight.text = `$(pulse) ${patternDisplay}`;
   statusBarItemRight.tooltip = "breathMaster - Click to cycle patterns!";
 }
 
@@ -1059,18 +1215,22 @@ function setupHoverTracking(): void {
   // This is a limitation of VS Code extension API - true hover detection would require more complex setup
 }
 
-function restartAnimation(): void {
-  // Update engine pattern if it changed
-  const config = vscode.workspace.getConfiguration("breathMaster");
-  const newPattern = config.get<Pattern>("pattern", "chill");
-  const customPattern = config.get<string>("customPattern", "4-4-4-4");
+async function restartAnimation(): Promise<void> {
+  // Update engine pattern using modern settings
+  const newPattern = await settings.getBreathingPattern() as Pattern;
+  const customPattern = (await settings.getCustomPattern()).join('-');
   
-  if (newPattern !== engine.pattern) {
+  // Always set the pattern and reset the engine cycle, even if the
+  // string matches the current pattern. This ensures timing (startTime)
+  // and durations are refreshed when users cycle through patterns.
+  try {
     engine.setPattern(newPattern, customPattern);
+  } catch (err) {
+    console.warn('Failed to set engine pattern during restart:', err);
   }
   
   stopAnimation();
-  startAnimation();
+  await startAnimation();
 }
 
 // --- Gentle Reminders (Eon) -------------------------------------------------
@@ -1098,14 +1258,8 @@ function scheduleGentleReminders() {
 }
 
 async function toggleBreathing(): Promise<void> {
-  const config = vscode.workspace.getConfiguration("breathMaster");
-  const currentEnabled = config.get<boolean>("enabled", true);
-  
-  await config.update("enabled", !currentEnabled, vscode.ConfigurationTarget.Global);
-  
-  vscode.window.showInformationMessage(
-    `breathMaster ${!currentEnabled ? "enabled" : "disabled"}`
-  );
+  // Since we no longer support disabled state, just cycle through patterns
+  await cyclePattern();
 }
 
 async function cyclePattern(): Promise<void> {
@@ -1119,12 +1273,25 @@ async function cyclePattern(): Promise<void> {
     custom: "Custom Pattern"
   };
   
-  const currentPattern = engine.pattern;
+  const currentPattern = await settings.getBreathingPattern() as Pattern;
+  console.log('🔍 Current pattern before change:', currentPattern);
+  
   const currentIndex = patterns.indexOf(currentPattern);
   const nextPattern = patterns[(currentIndex + 1) % patterns.length];
+  console.log('🔍 Next pattern:', nextPattern);
   
-  const config = vscode.workspace.getConfiguration("breathMaster");
-  await config.update("pattern", nextPattern, vscode.ConfigurationTarget.Global);
+  // Update using modern settings system
+  await settings.setBreathingPattern(nextPattern);
+  
+  // Verify the change was saved
+  const verifyPattern = await settings.getBreathingPattern();
+  console.log('🔍 Pattern after saving:', verifyPattern);
+  
+  // Restart animation to apply new pattern and update status bar
+  await restartAnimation();
+  
+  // Verify engine was updated
+  console.log('🔍 Engine pattern after restart:', engine.pattern);
   
   vscode.window.showInformationMessage(
     `🫁 ${patternNames[nextPattern]}`
@@ -1200,14 +1367,6 @@ async function showBreathFirstWelcome(): Promise<void> {
 }
 
 async function startMicroBreathingSession(): Promise<void> {
-  // Ensure breathing is enabled and start a short session
-  const config = vscode.workspace.getConfiguration("breathMaster");
-  const wasEnabled = config.get<boolean>("enabled", true);
-  
-  if (!wasEnabled) {
-    await config.update('enabled', true, vscode.ConfigurationTarget.Global);
-  }
-
   // Show status message during the micro session
   vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
@@ -1220,11 +1379,6 @@ async function startMicroBreathingSession(): Promise<void> {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   });
-
-  // Restore original setting if it was disabled
-  if (!wasEnabled) {
-    await config.update('enabled', wasEnabled, vscode.ConfigurationTarget.Global);
-  }
 }
 
 async function showGameModeOffer(): Promise<void> {
@@ -1237,7 +1391,8 @@ async function showGameModeOffer(): Promise<void> {
   const config = vscode.workspace.getConfiguration('breathMaster');
   
   if (gameModeChoice === 'Enable Game Mode') {
-    await config.update('enableGamification', true, vscode.ConfigurationTarget.Global);
+    await settings.setGamificationEnabled(true);
+    console.log('🔍 Enabled gamification via modern settings');
     onboardingManager.markTourCompleted(true);
     vscode.window.showInformationMessage('🌟 Game Mode enabled! Track your mindful coding journey.');
   } else {
@@ -1257,7 +1412,8 @@ async function showSimpleFallback(): Promise<void> {
   const config = vscode.workspace.getConfiguration('breathMaster');
   
   if (picked === 'Enable Game Mode') {
-    await config.update('enableGamification', true, vscode.ConfigurationTarget.Global);
+    await settings.setGamificationEnabled(true);
+    console.log('🔍 Enabled gamification via modern settings');
     onboardingManager.markTourCompleted(true);
     vscode.window.showInformationMessage('🌟 Game Mode enabled! Discover challenges and progress tracking.');
   } else {
@@ -1281,8 +1437,8 @@ function scheduleProgressiveDisclosure(): void {
 }
 
 async function exportData(): Promise<void> {
-  const config = vscode.workspace.getConfiguration("breathMaster");
-  const dataPrivacy = config.get<string>("dataPrivacy", "local-only");
+  const dataPrivacy = await settings.getDataPrivacy();
+  console.log('🔍 Export data - privacy setting:', dataPrivacy);
   
   if (dataPrivacy === "local-only") {
     const changePrivacy = await vscode.window.showWarningMessage(
@@ -1296,7 +1452,9 @@ async function exportData(): Promise<void> {
       return;
     }
     
-    await config.update("dataPrivacy", "export-allowed", vscode.ConfigurationTarget.Global);
+    // Update gamification settings with new privacy level
+    await settings.setDataPrivacy('export-allowed');
+    console.log('🔍 Updated privacy setting to export-allowed');
   }
   
   try {
@@ -1343,6 +1501,171 @@ async function clearData(): Promise<void> {
     } catch (error) {
       vscode.window.showErrorMessage(`Failed to clear data: ${error}`);
     }
+  }
+}
+
+async function cycleAnimationPreset(): Promise<void> {
+  const currentPreset = await settings.getAnimationPreset();
+  const presets = [
+    'default', 'minimal', 'nature', 'leaves', 'cosmic', 'lunar', 'pulse', 'heartbeat',
+    'diamond', 'flow', 'zen', 'aurora', 'matrix', 'binary', 'ocean', 'coffee',
+    'game', 'music', 'robot', 'rainbow', 'custom'
+  ];
+  const currentIndex = presets.indexOf(currentPreset);
+  const nextPreset = presets[(currentIndex + 1) % presets.length];
+  
+  // Update the animation preset
+  const currentSettings = await settings.getAnimationSettings();
+  await settingsManager.set('animation', {
+    ...currentSettings,
+    preset: nextPreset
+  });
+  
+  await restartAnimation(); // Apply the new preset
+  
+  const presetNames: Record<string, string> = {
+    default: 'Default Circles',
+    minimal: 'Minimal Dots',
+    nature: 'Nature Sparkles',
+    leaves: 'Autumn Leaves',
+    cosmic: 'Cosmic Journey',
+    lunar: 'Moon Phases',
+    pulse: 'Energy Pulse',
+    heartbeat: 'Heartbeat',
+    diamond: 'Diamond Flow',
+    flow: 'Arrow Flow',
+    zen: 'Zen Wisdom',
+    aurora: 'Aurora Colors',
+    matrix: 'Matrix Code',
+    binary: 'Binary Rhythm',
+    ocean: 'Ocean Waves',
+    coffee: 'Coffee Break',
+    game: 'Game On',
+    music: 'Musical Notes',
+    robot: 'Robot Tech',
+    rainbow: 'Rainbow Magic',
+    custom: 'Custom Figures'
+  };
+  
+  vscode.window.showInformationMessage(`🎨 Animation: ${presetNames[nextPreset]}`);
+}
+
+async function showStatusBarMenu(): Promise<void> {
+  const gamificationEnabled = await settings.getGamificationEnabled();
+  
+  if (gamificationEnabled) {
+    // Rich menu for gamification users
+    const options = [
+      { label: '⚡ 1m Micro Session', action: 'micro-session' },
+      { label: '🎨 Change Animation', action: 'change-animation' },
+      { label: '🫁 Change Pattern', action: 'change-pattern' },
+      { label: '🔄 Restart Breathing', action: 'restart-breathing' },
+      { label: '🎯 Start Session', action: 'start-session' },
+      { label: '📊 View Progress', action: 'view-progress' },
+      { label: '⚙️ Settings', action: 'open-settings' }
+    ];
+    
+    const pick = await vscode.window.showQuickPick(options, {
+      placeHolder: 'Breath Master Actions'
+    });
+    
+    if (!pick) return;
+    
+    switch (pick.action) {
+      case 'micro-session':
+        await startMicroSession();
+        break;
+      case 'change-animation':
+        await cycleAnimationPreset();
+        break;
+      case 'change-pattern':
+        await cyclePattern();
+        break;
+      case 'restart-breathing':
+        await restartAnimation();
+        vscode.window.showInformationMessage('🔄 Breathing animation restarted');
+        break;
+      case 'start-session':
+        vscode.commands.executeCommand('breathMaster.startSession');
+        break;
+      case 'view-progress':
+        vscode.commands.executeCommand('breathMaster.viewProgress');
+        break;
+      case 'open-settings':
+        vscode.commands.executeCommand('breathMaster.settingsPanel.focus');
+        break;
+    }
+  } else {
+    // Simple menu for non-gamification users
+    const options = [
+      { label: '⚡ 1m Micro Session', action: 'micro-session' },
+      { label: '🎨 Change Animation', action: 'change-animation' },
+      { label: '🫁 Change Pattern', action: 'change-pattern' },
+      { label: '🔄 Restart Breathing', action: 'restart-breathing' },
+      { label: '🎮 Enable Game Mode?', action: 'enable-gamification' },
+      { label: '⚙️ Settings', action: 'open-settings' }
+    ];
+    
+    const pick = await vscode.window.showQuickPick(options, {
+      placeHolder: 'Breath Master Actions'
+    });
+    
+    if (!pick) return;
+    
+    switch (pick.action) {
+      case 'micro-session':
+        await startMicroSession();
+        break;
+      case 'change-animation':
+        await cycleAnimationPreset();
+        break;
+      case 'change-pattern':
+        await cyclePattern();
+        break;
+      case 'restart-breathing':
+        await restartAnimation();
+        vscode.window.showInformationMessage('🔄 Breathing animation restarted');
+        break;
+      case 'enable-gamification':
+        await settings.setGamificationEnabled(true);
+        vscode.window.showInformationMessage('🎮 Game Mode enabled! Check your status bar for progress tracking.');
+        await restartAnimation(); // Refresh to show gamification items
+        break;
+      case 'open-settings':
+        vscode.commands.executeCommand('breathMaster.settingsPanel.focus');
+        break;
+    }
+  }
+}
+
+async function startMicroSession(): Promise<void> {
+  const tracker = meditationTracker as MeditationTracker;
+  
+  // Check if there's already an active session
+  const activeSession = tracker.getActiveSession();
+  if (activeSession) {
+    vscode.window.showWarningMessage('A session is already active. End it first to start a micro session.');
+    return;
+  }
+  
+  // Start 1-minute session
+  const started = tracker.startSession(1);
+  if (started.started) {
+    vscode.window.showInformationMessage('⚡ 1-minute micro session started! Quick mindful moment...');
+    
+    // Auto-complete after 1 minute
+    setTimeout(() => {
+      const currentSession = tracker.getActiveSession();
+      if (currentSession && currentSession.goalMinutes === 1) {
+        tracker.endSession();
+        vscode.window.showInformationMessage('✨ Micro session complete! Well done.');
+        updateGamificationDisplay();
+      }
+    }, 60 * 1000); // 60 seconds
+    
+    updateGamificationDisplay();
+  } else {
+    vscode.window.showWarningMessage(`Cannot start micro session: ${started.reason}`);
   }
 }
 

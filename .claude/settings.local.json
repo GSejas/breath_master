@@ -6,7 +6,8 @@
       "Bash(npm run package:*)",
       "Bash(npm run test:cov:*)",
       "Bash(npm install:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npm run dev:install:*)"
     ],
     "deny": [],
     "ask": []

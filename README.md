@@ -59,6 +59,7 @@ Remember: this is mindfulness with a playful twist - not a competitive race. You
 - **5 Preset Patterns**: Chill, Medium, Active, Boxing, Relaxing
 - **Custom Patterns**: Create your own with simple format: `4-4-4-4` (inhale-hold-exhale-pause)
 - **Visual Breathing Cues**: Subtle status bar animation guides your breath
+- **Custom Animation Figures**: Choose from preset styles or define your own icons
 - **Dual Indicators**: Left (breathing) and right (pattern controls) status bar items
 
 ## 🎮 Ethical Gamification (Opt-in)
@@ -150,14 +151,63 @@ Check out the [complete User Guide](./docs/USER-GUIDE.md) for detailed instructi
 
 ```json
 {
-  "breathMaster.pattern": "chill",                    // Breathing pattern
-  "breathMaster.customPattern": "4-4-4-4",            // Custom timing (seconds)
-  "breathMaster.intensity": 0.6,                      // Visual intensity
-  "breathMaster.enableGamification": false,           // Opt-in tracking
-  "breathMaster.dataPrivacy": "local-only",           // Privacy control
-  "breathMaster.gamificationCommitment": "balanced"   // UI style: minimal/balanced/nature
+  "breathMaster.pattern": "chill",                     // Breathing pattern
+  "breathMaster.customPattern": "4-4-4-4",             // Custom timing (seconds)
+  "breathMaster.intensity": 0.6,                       // Visual intensity
+  "breathMaster.enableGamification": false,            // Opt-in tracking
+  "breathMaster.dataPrivacy": "local-only",            // Privacy control
+  "breathMaster.gamificationCommitment": "balanced",   // UI style: minimal/balanced/nature
+  "breathMaster.animation.preset": "default",          // Animation style: default/minimal/nature/custom
+  "breathMaster.animation.figures": {                  // Custom icons (when preset: "custom")
+    "inhale": ["$(dot-fill)", "$(circle-outline)", "$(circle-filled)"],
+    "hold1": ["$(circle-filled)", "$(circle-filled)", "$(circle-filled)"],
+    "exhale": ["$(dot-fill)", "$(circle-outline)", "$(circle-filled)"],
+    "hold2": ["$(dot-fill)", "$(dot-fill)", "$(dot-fill)"]
+  }
 }
 ```
+
+### 🎨 Animation Presets & Demo Examples
+
+**Try these animation configurations:**
+
+**Minimal Style** (clean dots and outlines):
+```json
+"breathMaster.animation.preset": "minimal"
+```
+
+**Nature Style** (organic growth symbols):
+```json
+"breathMaster.animation.preset": "nature"
+```
+
+**Custom Geometric** (squares and triangles):
+```json
+{
+  "breathMaster.animation.preset": "custom",
+  "breathMaster.animation.figures": {
+    "inhale": ["$(primitive-square)", "$(triangle-up)", "$(stop-circle)"],
+    "hold1": ["$(stop-circle)", "$(stop-circle)", "$(stop-circle)"],
+    "exhale": ["$(primitive-square)", "$(triangle-up)", "$(stop-circle)"],
+    "hold2": ["$(primitive-square)", "$(primitive-square)", "$(primitive-square)"]
+  }
+}
+```
+
+**Custom Progress Bars** (filling effect):
+```json
+{
+  "breathMaster.animation.preset": "custom", 
+  "breathMaster.animation.figures": {
+    "inhale": ["$(dash)", "$(remove)", "$(circle-filled)"],
+    "hold1": ["$(circle-filled)", "$(circle-filled)", "$(circle-filled)"],
+    "exhale": ["$(dash)", "$(remove)", "$(circle-filled)"],
+    "hold2": ["$(dash)", "$(dash)", "$(dash)"]
+  }
+}
+```
+
+**Available VS Code Icons**: `$(circle-filled)`, `$(dot-fill)`, `$(record)`, `$(globe)`, `$(tree)`, `$(seed)`, `$(triangle-up)`, `$(primitive-square)`, `$(dash)`, `$(remove)`, `$(stop-circle)`, and [many more](https://microsoft.github.io/vscode-codicons/dist/codicon.html).
 
 ## 🎯 Commands
 
