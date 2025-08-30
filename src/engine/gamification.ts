@@ -129,6 +129,7 @@ export class MeditationTracker {
   private activeSession: ActiveSessionRuntime | null = null;
   private activePledge: ActivePledge | null = null;
   private useVersionedStorage: boolean = false;
+  private sessionEndCallbacks: (() => void)[] = [];
 
   constructor(private storageKey: string = 'breatheGlow.meditationStats', storage?: any) {
     this.storage = storage;
@@ -274,6 +275,14 @@ export class MeditationTracker {
     this.saveStats();
   }
 
+  // Public method for external XP rewards (e.g., micro-meditation)
+  addExternalXP(amount: number, source?: string): void {
+    this.addXP(amount);
+    if (source) {
+      console.log(`Added ${amount} XP from ${source}`);
+    }
+  }
+
   getCurrentLevel(): MeditationLevel {
     for (let i = MEDITATION_LEVELS.length - 1; i >= 0; i--) {
       if (this.stats.totalXP >= MEDITATION_LEVELS[i].xpRequired) {
@@ -382,6 +391,10 @@ export class MeditationTracker {
   getActiveSession(): ActiveSessionRuntime | null { return this.activeSession ? { ...this.activeSession } : null; }
   getActivePledge(): ActivePledge | null { return this.activePledge ? { ...this.activePledge } : null; }
 
+  onSessionEnded(callback: () => void): void {
+    this.sessionEndCallbacks.push(callback);
+  }
+
   startSession(goalMinutes?: number): { started: boolean; reason?: string; session?: ActiveSessionRuntime } {
     if (this.activeSession) {
       return { started: false, reason: 'Session already running or paused' };
@@ -466,6 +479,16 @@ export class MeditationTracker {
     this.activeSession = null;
     if (this.activePledge && pledgeHonored) this.activePledge.completed = true; else if (this.activePledge) this.activePledge.completed = false;
     this.saveStats();
+    
+    // Notify session end callbacks
+    this.sessionEndCallbacks.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('Session end callback error:', error);
+      }
+    });
+    
     return record;
   }
 

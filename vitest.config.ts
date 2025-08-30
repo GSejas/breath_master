@@ -1,3 +1,18 @@
+/*
+  Vitest Configuration (Unit Tests)
+
+  Purpose:
+  - Runs fast, isolated unit tests outside the VS Code runtime.
+  - Complements integration tests executed via @vscode/test-electron.
+
+  Scope:
+  - Includes 
+  - Excludes tests that require VS Code APIs (see comments below).
+
+  Run:
+  - npm run test:unit        (watch: npm run test:unit:watch)
+  - Coverage: npm run test:cov
+*/
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({

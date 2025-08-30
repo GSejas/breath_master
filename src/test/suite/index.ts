@@ -1,3 +1,20 @@
+/*
+  Mocha Suite Bootstrap
+
+  Purpose:
+  - Configures and runs the Mocha test suite inside the VS Code integration harness.
+  - Discovers compiled test files and adds them to Mocha for execution.
+
+  Discovery:
+  - Looks for  under the compiled tests root.
+  - Source `.ts` tests live in `src/test/suite`, compiled to `dist/test/suite` by pretest.
+
+  Run:
+  - npm run test:integration  (or `npm test` which includes unit + integration)
+
+  Notes:
+  - Keep tests UI-agnostic to avoid modal UI hangs in automation.
+*/
 import * as path from 'path';
 import Mocha from 'mocha';
 import { glob } from 'glob';

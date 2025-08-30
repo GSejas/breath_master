@@ -26,6 +26,11 @@ export interface GamificationSettings {
     monthlyReports: boolean;
     trendAnalysis: boolean;
   };
+  microMeditation: {
+    enabled: boolean;
+    timing: 'gentle' | 'standard' | 'assertive';
+    icon: 'meditation' | 'timer' | 'target' | 'leaf' | 'zen';
+  };
 }
 
 export class GamificationModule implements SettingsModule<GamificationSettings> {
@@ -59,6 +64,11 @@ export class GamificationModule implements SettingsModule<GamificationSettings> 
       weeklyReports: Validator.boolean(),
       monthlyReports: Validator.boolean(),
       trendAnalysis: Validator.boolean()
+    }),
+    microMeditation: Validator.object({
+      enabled: Validator.boolean(),
+      timing: Validator.string({ enum: ['gentle', 'standard', 'assertive'] }),
+      icon: Validator.string({ enum: ['meditation', 'timer', 'target', 'leaf', 'zen'] })
     })
   });
 
@@ -87,6 +97,11 @@ export class GamificationModule implements SettingsModule<GamificationSettings> 
         weeklyReports: false,
         monthlyReports: false,
         trendAnalysis: false
+      },
+      microMeditation: {
+        enabled: false,
+        timing: 'standard',
+        icon: 'meditation'
       }
     };
   }

@@ -116,6 +116,8 @@ stateDiagram-v2
   Finished --> Idle
 ```
 
+![](2025-08-29-23-00-20.png)
+
 ### Starting a Session
 
 1. Click the right status bar item

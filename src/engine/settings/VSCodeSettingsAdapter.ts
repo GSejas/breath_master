@@ -162,6 +162,49 @@ export class VSCodeSettingsAdapter implements ISettingsAdapter {
     return true; // Default enabled, could be added to VS Code settings later
   }
 
+  async getGamificationSettings(): Promise<any> {
+    const config = this.getConfig();
+    const defaults = this.gamificationModule.getDefaults();
+    return {
+      enabled: config.get<boolean>('gamification.enabled', defaults.enabled),
+      commitment: config.get<string>('gamification.commitment', defaults.commitment),
+      privacy: config.get<string>('gamification.dataPrivacy', defaults.privacy),
+      challenges: {
+        enabled: config.get<boolean>('gamification.challenges.enabled', defaults.challenges.enabled),
+        difficulty: config.get<string>('gamification.challenges.difficulty', defaults.challenges.difficulty),
+        notifications: config.get<boolean>('gamification.challenges.notifications', defaults.challenges.notifications)
+      },
+      pledges: {
+        enabled: config.get<boolean>('gamification.pledges.enabled', defaults.pledges.enabled),
+        maxActive: config.get<number>('gamification.pledges.maxActive', defaults.pledges.maxActive),
+        defaultDuration: config.get<number>('gamification.pledges.defaultDuration', defaults.pledges.defaultDuration)
+      },
+      progression: {
+        showLevel: config.get<boolean>('gamification.progression.showLevel', defaults.progression.showLevel),
+        showXP: config.get<boolean>('gamification.progression.showXP', defaults.progression.showXP),
+        showStreak: config.get<boolean>('gamification.progression.showStreak', defaults.progression.showStreak),
+        celebrateAchievements: config.get<boolean>('gamification.progression.celebrateAchievements', defaults.progression.celebrateAchievements)
+      },
+      insights: {
+        weeklyReports: config.get<boolean>('gamification.insights.weeklyReports', defaults.insights.weeklyReports),
+        monthlyReports: config.get<boolean>('gamification.insights.monthlyReports', defaults.insights.monthlyReports),
+        trendAnalysis: config.get<boolean>('gamification.insights.trendAnalysis', defaults.insights.trendAnalysis)
+      },
+      microMeditation: {
+        enabled: config.get<boolean>('gamification.microMeditation.enabled', defaults.microMeditation.enabled),
+        timing: config.get<string>('gamification.microMeditation.timing', defaults.microMeditation.timing),
+        icon: config.get<string>('gamification.microMeditation.icon', defaults.microMeditation.icon)
+      }
+    };
+  }
+
+  async updateGamificationSettings(settings: any): Promise<void> {
+    const config = this.getConfig();
+    await config.update('gamification.microMeditation.enabled', settings.microMeditation.enabled, vscode.ConfigurationTarget.Global);
+    await config.update('gamification.microMeditation.timing', settings.microMeditation.timing, vscode.ConfigurationTarget.Global);
+    await config.update('gamification.microMeditation.icon', settings.microMeditation.icon, vscode.ConfigurationTarget.Global);
+  }
+
   // Stretch settings
   async getStretchCompactMode(): Promise<'auto' | 'on' | 'off'> {
     const config = this.getConfig();
