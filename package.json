@@ -3,7 +3,7 @@
   "displayName": "Breath Master",
   "icon": "media/breath-master-iconic.png",
   "description": "Master your breathing and coding flow with gentle gamification and mindful tracking.",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "publisher": "GSejas",
   "license": "MIT",
   "repository": {
@@ -35,16 +35,6 @@
   "main": "./dist/vscode/extension.js",
   "browser": "./dist/vscode/extension.js",
   "contributes": {
-    "views": {
-      "explorer": [
-        {
-          "id": "breathMaster.settingsPanel",
-          "name": "Breath Master Settings",
-          "type": "webview",
-          "contextualTitle": "Breath Master Settings"
-        }
-      ]
-    },
     "colors": [
       {
         "id": "breathMaster.pledgeBackground",
